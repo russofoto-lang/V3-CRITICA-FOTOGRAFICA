@@ -286,9 +286,15 @@ const App = () => {
     setError(null);
     setAnalysis(null);
 
-    try {
+   try {
       const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-      const model = 'gemini-2.5-flash';
+      const model = 'gemini-robotics-er-1.5-preview'; // ← CAMBIATO QUI
+      
+      const imageParts = await Promise.all(images.map(file => fileToGenerativePart(file)));
+      
+      // ... resto del codice rimane uguale
+      
+      const imageParts = await Promise.all(images.map(file => fileToGenerativePart(file)));
       
       const imageParts = await Promise.all(images.map(file => fileToGenerativePart(file)));
       
