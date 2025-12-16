@@ -327,7 +327,7 @@ const App = () => {
     };
   };
     
-    const analyzeWithFallback = async (imgs: File[], prompt: string) => {
+   const analyzeWithFallback = async (imgs: File[], prompt: string) => {
     const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_API_KEY });
     const imageParts = await Promise.all(imgs.map(fileToGenerativePart));
     
