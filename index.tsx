@@ -405,6 +405,14 @@ const App = () => {
                 </div>
                 
                 <MarkdownDisplay content={analysis} />
+
+                <div className="mt-10 pt-6 border-t border-gray-800 flex items-center justify-between text-sm text-gray-500">
+                    <div className="flex items-center space-x-2">
+                        <GraduationCap className="w-4 h-4" />
+                        <span>Suggerimenti adattivi inclusi</span>
+                    </div>
+                    <span>Generato da Google Gemini</span>
+                </div>
               </div>
             )}
           </div>
@@ -414,4 +422,5 @@ const App = () => {
   );
 };
 
-export default App;
+const root = createRoot(document.getElementById('root')!);
+root.render(<App />);
