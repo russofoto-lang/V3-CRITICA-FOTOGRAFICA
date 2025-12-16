@@ -295,87 +295,91 @@ const App = () => {
     setAnalysis(null);
 
     try {
-      const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
-      const model = 'gemini-1.5-flash';
+        // 1. Inizializzazione corretta con import.meta.env per Vite
+        const genAI = new GoogleGenAI(import.meta.env.VITE_GEMINI_API_KEY);
+        
+        // 2. Utilizzo del metodo getGenerativeModel per evitare errori di routing API (404)
+        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
       
-      const imageParts = await Promise.all(images.map(file => fileToGenerativePart(file)));
+        const imageParts = await Promise.all(images.map(file => fileToGenerativePart(file)));
       
-      let finalPrompt = "";
-      const isEmotional = style === 'emotional';
+        let finalPrompt = "";
+        const isEmotional = style === 'emotional';
 
-      // COSTRUZIONE DINAMICA DEL PROMPT
-      if (mode === 'single') {
-          if (isEmotional) {
-              finalPrompt = EMOTIONAL_SYSTEM_PROMPT + `\n\n[MODALITÀ: SINGOLA - EMOZIONALE]. Ho caricato 1 immagine. Parlami solo di emozioni.`;
-          } else {
-              finalPrompt = CRITIC_SYSTEM_PROMPT + `\n\n[MODALITÀ: SINGOLA - TECNICA]. Ho caricato 1 immagine. Sii spietato sulla tecnica e composizione.`;
-          }
-      } 
-      else if (mode === 'project') {
-          if (isEmotional) {
-              finalPrompt = EMOTIONAL_SYSTEM_PROMPT + 
-              `\n\n[MODALITÀ: PROGETTO - EMOZIONALE]. Ho caricato ${images.length} immagini. 
-              Considera queste immagini come strofe di un'unica poesia.
-              Invece di analizzare la tecnica, analizza il "flusso emotivo" (Emotional Flow) che scorre tra un'immagine e l'altra.
-              1. Qual è il sentimento dominante della sequenza?
-              2. Come evolve l'emozione dalla prima all'ultima foto?
-              3. C'è un'immagine che rompe l'incantesimo o cambia il tono emotivo?
-              Non dare voti, scrivi un commento critico-poetico sull'intera serie.`;
-          } else {
-              finalPrompt = CRITIC_SYSTEM_PROMPT + 
-              `\n\n[MODALITÀ: PROGETTO - TECNICA]. Ho caricato ${images.length} immagini. 
-              Analizza il portfolio seguendo le regole rigide per 'Analisi di Progetto'. Coerenza, editing e tecnica prima di tutto.`;
-          }
-      } 
-      else if (mode === 'curator') {
-          if (isEmotional) {
-              finalPrompt = CURATOR_SYSTEM_PROMPT.replace(/{N}/g, selectionCount.toString()) + 
-              `\n\n[MODALITÀ: CURATORE - EMOZIONALE]. Ho caricato ${images.length} immagini. Selezionane ${selectionCount}.
-              ATTENZIONE: Il tuo criterio di selezione NON è il mercato o la tecnica perfetta.
-              Devi selezionare le immagini che hanno la maggiore FORZA EVOCATIVA e POETICA.
-              Scegli quelle che fanno sognare, piangere o inquietare.
-              Motiva la scelta descrivendo la sensazione che ogni foto selezionata provoca, non la sua composizione.
-              Titolo della mostra: Deve essere onirico e astratto.`;
-          } else {
-              finalPrompt = CURATOR_SYSTEM_PROMPT.replace(/{N}/g, selectionCount.toString()) + 
-              `\n\n[MODALITÀ: CURATORE - MUSEALE]. Ho caricato ${images.length} immagini. Selezionane ${selectionCount}.
-              Criteri: Valore di mercato, perfezione tecnica, impatto museale. Sii rigoroso.`;
-          }
-      } 
-      else if (mode === 'editing') {
-          if (isEmotional) {
-               finalPrompt = EDITING_SYSTEM_PROMPT + 
-               `\n\n[MODALITÀ: EDITING - CREATIVO/EMOTIVO]. Ho caricato 1 immagine.
-               Il tuo obiettivo NON è correggere il bilanciamento del bianco per renderlo neutro.
-               Il tuo obiettivo è dare istruzioni per creare un ATMOSFERA (Mood).
-               Suggerisci color grading audaci (es. Cinematico, Nostalgico, Onirico, Dark).
-               Se la foto è mossa o rumorosa, spiega come esaltare questi difetti per fini artistici.
-               Trasforma la foto in un quadro.`;
-          } else {
-              finalPrompt = EDITING_SYSTEM_PROMPT + 
-              `\n\n[MODALITÀ: EDITING - TECNICO]. Ho caricato 1 immagine.
-              Correggi gli errori. Bilanciamento neutro, esposizione corretta, recupero ombre. Massimizza la qualità del file.`;
-          }
-      }
-
-      const response = await ai.models.generateContent({
-        model: model,
-        contents: {
-            parts: [
-                ...imageParts,
-                { text: finalPrompt }
-            ]
+        // COSTRUZIONE DINAMICA DEL PROMPT
+        if (mode === 'single') {
+            if (isEmotional) {
+                finalPrompt = EMOTIONAL_SYSTEM_PROMPT + `\n\n[MODALITÀ: SINGOLA - EMOZIONALE]. Ho caricato 1 immagine. Parlami solo di emozioni.`;
+            } else {
+                finalPrompt = CRITIC_SYSTEM_PROMPT + `\n\n[MODALITÀ: SINGOLA - TECNICA]. Ho caricato 1 immagine. Sii spietato sulla tecnica e composizione.`;
+            }
+        } 
+        else if (mode === 'project') {
+            if (isEmotional) {
+                finalPrompt = EMOTIONAL_SYSTEM_PROMPT + 
+                `\n\n[MODALITÀ: PROGETTO - EMOZIONALE]. Ho caricato ${images.length} immagini. 
+                Considera queste immagini come strofe di un'unica poesia.
+                Invece di analizzare la tecnica, analizza il "flusso emotivo" (Emotional Flow) che scorre tra un'immagine e l'altra.
+                1. Qual è il sentimento dominante della sequenza?
+                2. Come evolve l'emozione dalla prima all'ultima foto?
+                3. C'è un'immagine che rompe l'incantesimo o cambia il tono emotivo?
+                Non dare voti, scrivi un commento critico-poetico sull'intera serie.`;
+            } else {
+                finalPrompt = CRITIC_SYSTEM_PROMPT + 
+                `\n\n[MODALITÀ: PROGETTO - TECNICA]. Ho caricato ${images.length} immagini. 
+                Analizza il portfolio seguendo le regole rigide per 'Analisi di Progetto'. Coerenza, editing e tecnica prima di tutto.`;
+            }
+        } 
+        else if (mode === 'curator') {
+            const n = selectionCount.toString();
+            if (isEmotional) {
+                finalPrompt = CURATOR_SYSTEM_PROMPT.replace(/{N}/g, n) + 
+                `\n\n[MODALITÀ: CURATORE - EMOZIONALE]. Ho caricato ${images.length} immagini. Selezionane ${n}.
+                ATTENZIONE: Il tuo criterio di selezione NON è il mercato o la tecnica perfetta.
+                Devi selezionare le immagini che hanno la maggiore FORZA EVOCATIVA e POETICA.
+                Scegli quelle che fanno sognare, piangere o inquietare.
+                Motiva la scelta descrivendo la sensazione che ogni foto selezionata provoca, non la sua composizione.
+                Titolo della mostra: Deve essere onirico e astratto.`;
+            } else {
+                finalPrompt = CURATOR_SYSTEM_PROMPT.replace(/{N}/g, n) + 
+                `\n\n[MODALITÀ: CURATORE - MUSEALE]. Ho caricato ${images.length} immagini. Selezionane ${n}.
+                Criteri: Valore di mercato, perfezione tecnica, impatto museale. Sii rigoroso.`;
+            }
+        } 
+        else if (mode === 'editing') {
+            if (isEmotional) {
+                 finalPrompt = EDITING_SYSTEM_PROMPT + 
+                 `\n\n[MODALITÀ: EDITING - CREATIVO/EMOTIVO]. Ho caricato 1 immagine.
+                 Il tuo obiettivo NON è correggere il bilanciamento del bianco per renderlo neutro.
+                 Il tuo obiettivo è dare istruzioni per creare un ATMOSFERA (Mood).
+                 Suggerisci color grading audaci (es. Cinematico, Nostalgico, Onirico, Dark).
+                 Se la foto è mossa o rumorosa, spiega come esaltare questi difetti per fini artistici.
+                 Trasforma la foto in un quadro.`;
+            } else {
+                finalPrompt = EDITING_SYSTEM_PROMPT + 
+                `\n\n[MODALITÀ: EDITING - TECNICO]. Ho caricato 1 immagine.
+                Correggi gli errori. Bilanciamento neutro, esposizione corretta, recupero ombre. Massimizza la qualità del file.`;
+            }
         }
-      });
 
-      setAnalysis(response.text || "Nessuna analisi generata.");
+        // 3. Chiamata corretta utilizzando l'array di parti (immagini + testo)
+        const result = await model.generateContent([
+            ...imageParts,
+            { text: finalPrompt }
+        ]);
+
+        const response = await result.response;
+        const text = response.text();
+        
+        setAnalysis(text || "Nessuna analisi generata.");
     } catch (err: any) {
-      console.error("Error analyzing photo:", err);
-      setError("Si è verificato un errore durante l'analisi. Riprova più tardi o controlla la tua connessione.");
+        console.error("Error analyzing photo:", err);
+        // Messaggio di errore più dettagliato per il debugging
+        setError(`Errore: ${err.message || "Problema di connessione all'IA"}`);
     } finally {
-      setLoading(false);
+        setLoading(false);
     }
-  };
+};
 
   const MarkdownDisplay = ({ content }: { content: string }) => {
     const sections = content.split(/\n/);
