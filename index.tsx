@@ -296,7 +296,7 @@ const App = () => {
 
     try {
       const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-      const model = 'gemini-2.5-flash';
+      const model = 'gemini-1.5-flash';
       
       const imageParts = await Promise.all(images.map(file => fileToGenerativePart(file)));
       
