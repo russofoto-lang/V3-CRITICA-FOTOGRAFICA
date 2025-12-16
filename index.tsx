@@ -268,66 +268,124 @@ const App = () => {
   const incrementSelection = () => setSelectionCount(p => Math.min(p + 1, 20));
   const decrementSelection = () => setSelectionCount(p => Math.max(p - 1, 1));
 
-  const resizeImage = (file: File, maxWidth = 1920, maxHeight = 1920, quality = 0.85): Promise<Blob> => {
-    return new Promise((resolve, reject) => {
-      const img = new Image();
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
-      
-      img.onload = () => {
-        let { width, height } = img;
-        
-        if (width > maxWidth || height > maxHeight) {
-          if (width > height) {
-            height = (height * maxWidth) / width;
-            width = maxWidth;
-          } else {
-            width = (width * maxHeight) / height;
-            height = maxHeight;
-          }
-        }
-        
-        canvas.width = width;
-        canvas.height = height;
-        ctx?.drawImage(img, 0, 0, width, height);
-        
-        canvas.toBlob(
-          (blob) => blob ? resolve(blob) : reject(new Error('Resize failed')),
-          file.type,
-          quality
-        );
-      };
-      
-      img.onerror = reject;
-      img.src = URL.createObjectURL(file);
+  // --- Image resize (automatico) ---
+  // Obiettivo: ridurre upload/compute quando l'immagine è molto grande, senza cambiare output/funzionalità.
+  // Strategia: se l'immagine è già "ragionevole" (dimensioni + peso), inviamo l'originale.
+  // Altrimenti: ridimensioniamo lato client mantenendo l'orientamento EXIF (quando supportato).
+  const readFileAsDataUrl = (file: File) =>
+    new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result as string);
+      reader.onerror = () => reject(new Error('Errore lettura file'));
+      reader.readAsDataURL(file);
     });
+
+  const resizeImageToJpegBase64 = async (file: File, maxSide: number, quality = 0.9) => {
+    const dataUrl = await readFileAsDataUrl(file);
+
+    // Decodifica immagine
+    let bitmap: ImageBitmap | null = null;
+    try {
+      // imageOrientation mantiene rotazione EXIF su browser moderni
+      bitmap = await createImageBitmap(file, { imageOrientation: 'from-image' as any });
+    } catch {
+      bitmap = null;
+    }
+
+    let srcW: number;
+    let srcH: number;
+    let drawSource: CanvasImageSource;
+
+    if (bitmap) {
+      srcW = bitmap.width;
+      srcH = bitmap.height;
+      drawSource = bitmap;
+    } else {
+      const img = new Image();
+      img.src = dataUrl;
+      await new Promise<void>((resolve, reject) => {
+        img.onload = () => resolve();
+        img.onerror = () => reject(new Error('Errore decodifica immagine'));
+      });
+      srcW = img.naturalWidth;
+      srcH = img.naturalHeight;
+      drawSource = img;
+    }
+
+    // Se già piccola e leggera, inviamo l'originale (evita anche qualsiasi micro-variazione).
+    const tooLargeByBytes = file.size > 1.5 * 1024 * 1024; // 1.5MB
+    const tooLargeByDim = srcW > maxSide || srcH > maxSide;
+    if (!tooLargeByBytes && !tooLargeByDim) {
+      const base64 = dataUrl.split(',')[1];
+      return { mimeType: file.type, dataBase64: base64 };
+    }
+
+    // Calcola nuove dimensioni
+    const scale = Math.min(1, maxSide / Math.max(srcW, srcH));
+    const dstW = Math.max(1, Math.round(srcW * scale));
+    const dstH = Math.max(1, Math.round(srcH * scale));
+
+    // Canvas (OffscreenCanvas se disponibile)
+    let canvas: HTMLCanvasElement | OffscreenCanvas;
+    let ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D | null;
+
+    if (typeof OffscreenCanvas !== 'undefined') {
+      canvas = new OffscreenCanvas(dstW, dstH);
+      ctx = canvas.getContext('2d');
+    } else {
+      const c = document.createElement('canvas');
+      c.width = dstW;
+      c.height = dstH;
+      canvas = c;
+      ctx = c.getContext('2d');
+    }
+
+    if (!ctx) throw new Error('Canvas non disponibile');
+    // Qualità di scaling migliore (quando supportata)
+    (ctx as any).imageSmoothingEnabled = true;
+    (ctx as any).imageSmoothingQuality = 'high';
+
+    ctx.drawImage(drawSource, 0, 0, dstW, dstH);
+
+    // Esporta JPEG
+    let outDataUrl: string;
+    if (canvas instanceof OffscreenCanvas) {
+      const blob = await canvas.convertToBlob({ type: 'image/jpeg', quality });
+      const blobDataUrl = await new Promise<string>((resolve, reject) => {
+        const r = new FileReader();
+        r.onloadend = () => resolve(r.result as string);
+        r.onerror = () => reject(new Error('Errore lettura blob'));
+        r.readAsDataURL(blob);
+      });
+      outDataUrl = blobDataUrl;
+    } else {
+      outDataUrl = canvas.toDataURL('image/jpeg', quality);
+    }
+
+    if (bitmap) bitmap.close();
+
+    return { mimeType: 'image/jpeg', dataBase64: outDataUrl.split(',')[1] };
+  };
+
+  const getMaxSideForMode = () => {
+    // Scelte conservative: non peggiorano la lettura ma riducono molto peso.
+    if (mode === 'editing') return 2048;
+    if (mode === 'curator') return 1536;
+    return 1024; // single / project
   };
 
   const fileToGenerativePart = async (file: File) => {
-    let processedFile: File | Blob = file;
-    
-    // Ridimensiona se > 2MB
-    if (file.size > 2 * 1024 * 1024) {
-      console.log(`📐 Ridimensionamento: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)}MB)`);
-      processedFile = await resizeImage(file);
-      console.log(`✅ Ridotto a: ${(processedFile.size / 1024 / 1024).toFixed(2)}MB`);
-    }
-    
-    const base64EncodedDataPromise = new Promise((resolve) => {
-      const reader = new FileReader();
-      reader.onloadend = () => resolve((reader.result as string).split(',')[1]);
-      reader.readAsDataURL(processedFile);
-    });
-    
+    const maxSide = getMaxSideForMode();
+    const { mimeType, dataBase64 } = await resizeImageToJpegBase64(file, maxSide, 0.9);
     return {
       inlineData: {
-        data: await base64EncodedDataPromise as string,
-        mimeType: file.type,
+        data: dataBase64,
+        mimeType,
       },
     };
   };
 
- const analyzeWithFallback = async (imgs: File[], prompt: string) => {
+  const analyzeWithFallback = async (imgs: File[], prompt: string) => {
     const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_API_KEY });
     const imageParts = await Promise.all(imgs.map(fileToGenerativePart));
     
@@ -339,8 +397,6 @@ const App = () => {
       'gemini-robotics-er-1.5-preview'
     ];
     
-    let lastError = null;
-    
     for (const model of models) {
       try {
         console.log(`🔄 Tentativo: ${model}`);
@@ -351,33 +407,13 @@ const App = () => {
         console.log(`✅ Successo: ${model}`);
         return res.text || "Nessuna analisi generata.";
       } catch (err: any) {
-        lastError = err;
-        const errorMsg = err.message?.toLowerCase() || '';
         console.warn(`❌ ${model}:`, err.message);
-        
-        // Continua con il prossimo modello se:
-        // - quota/rate limit (429)
-        // - model overloaded (503)
-        // - resource exhausted
-        if (
-          errorMsg.includes('quota') || 
-          errorMsg.includes('limit') || 
-          errorMsg.includes('429') ||
-          errorMsg.includes('503') ||
-          errorMsg.includes('overloaded') ||
-          errorMsg.includes('resource') ||
-          errorMsg.includes('unavailable')
-        ) {
-          continue; // Prova il prossimo modello
+        if (!err.message?.includes('quota') && !err.message?.includes('limit') && !err.message?.includes('429')) {
+          throw err;
         }
-        
-        // Per altri errori (es. API key invalida, errore di rete), interrompi subito
-        throw err;
       }
     }
-    
-    // Se siamo qui, tutti i modelli hanno fallito
-    throw new Error('Tutti i modelli sono temporaneamente non disponibili. Riprova tra qualche minuto.');
+    throw new Error('Tutti i modelli hanno raggiunto i limiti. Riprova più tardi.');
   };
 
  const analyzePhoto = async () => {
