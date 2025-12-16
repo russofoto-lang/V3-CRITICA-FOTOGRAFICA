@@ -1,6 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
-import { GoogleGenerativeAI } from "@google/generative-ai";
 import { Camera, Upload, Image as ImageIcon, Loader2, Aperture, Palette, GraduationCap, AlertCircle, Layers, FileImage, Landmark, Minus, Plus, Download, Sliders, HelpCircle, Heart, Sparkles, Brain } from 'lucide-react';
 
 const CRITIC_SYSTEM_PROMPT = `
@@ -311,10 +310,22 @@ const App = () => {
     setError(null);
 
     try {
-      const genAI = new GoogleGenerativeAI(apiKey);
-      const model = genAI.getGenerativeModel({ model: "gemini-pro-vision" });
-
-      const imageParts = await Promise.all(images.map(fileToGenerativePart));
+      // Converti le immagini in base64
+      const imageParts = await Promise.all(images.map(async (file) => {
+        return new Promise((resolve) => {
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            const base64 = (reader.result as string).split(',')[1];
+            resolve({
+              inlineData: {
+                data: base64,
+                mimeType: file.type
+              }
+            });
+          };
+          reader.readAsDataURL(file);
+        });
+      }));
 
       let systemPrompt = style === 'emotional' 
         ? EMOTIONAL_SYSTEM_PROMPT 
@@ -326,13 +337,32 @@ const App = () => {
         systemPrompt = EDITING_SYSTEM_PROMPT;
       }
 
-      const result = await model.generateContent([
-        systemPrompt,
-        ...imageParts as any
-      ]);
-      
-      const response = await result.response;
-      const text = response.text();
+      // Usa direttamente le API REST
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            contents: [{
+              parts: [
+                { text: systemPrompt },
+                ...imageParts
+              ]
+            }]
+          })
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error?.message || `Errore ${response.status}`);
+      }
+
+      const data = await response.json();
+      const text = data.candidates?.[0]?.content?.parts?.[0]?.text || 'Nessuna risposta generata';
       setAnalysis(text);
     } catch (err: any) {
       console.error('Errore durante l\'analisi:', err);
