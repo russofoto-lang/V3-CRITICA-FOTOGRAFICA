@@ -326,17 +326,17 @@ const App = () => {
       },
     };
   };
-
- const analyzeWithFallback = async (imgs: File[], prompt: string) => {
+    
+   const analyzeWithFallback = async (imgs: File[], prompt: string) => {
     const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_API_KEY });
     const imageParts = await Promise.all(imgs.map(fileToGenerativePart));
     
     const models = [
       'gemini-2.0-flash-exp',
-      'gemini-2.5-flash',
-      'gemini-1.5-flash',
-      'gemini-1.5-flash-8b',
-      'gemini-robotics-er-1.5-preview'
+      'gemini-1.5-flash-latest',
+      'gemini-1.5-flash-002',
+      'gemini-1.5-flash-8b-latest',
+      'gemini-1.5-pro-latest'
     ];
     
     let lastError = null;
