@@ -293,11 +293,6 @@ const App = () => {
       const imageParts = await Promise.all(images.map(file => fileToGenerativePart(file)));
       
       // ... resto del codice rimane uguale
-      
-      const imageParts = await Promise.all(images.map(file => fileToGenerativePart(file)));
-      
-      const imageParts = await Promise.all(images.map(file => fileToGenerativePart(file)));
-      
       let finalPrompt = "";
       const isEmotional = style === 'emotional';
 
