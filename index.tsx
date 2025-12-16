@@ -328,7 +328,7 @@ const App = () => {
   };
     
    const analyzeWithFallback = async (imgs: File[], prompt: string) => {
-    const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_API_KEY });
+    const genAI = new GoogleGenerativeAI(import.meta.env.VITE_API_KEY);
     const imageParts = await Promise.all(imgs.map(fileToGenerativePart));
     
     const models = [
@@ -344,10 +344,10 @@ const App = () => {
     for (const model of models) {
       try {
         console.log(`🔄 Tentativo: ${model}`);
-        const res = await ai.models.generateContent({
-          model,
-          contents: { parts: [...imageParts, { text: prompt }] }
-        });
+        const model = genAI.getGenerativeModel({ model: modelName });
+        const result = await model.generateContent([...imageParts, prompt]);
+        const response = await result.response;
+        const text = response.text();
         console.log(`✅ Successo: ${model}`);
         return res.text || "Nessuna analisi generata.";
       } catch (err: any) {
