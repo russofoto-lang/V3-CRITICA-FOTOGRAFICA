@@ -364,14 +364,6 @@ const App = () => {
     }
   };
 
-## ✅ Riepilogo Posizioni
-```
-Riga ~290: fileToGenerativePart (ESISTE GIÀ - NON TOCCARE)
-         ↓
-Riga ~305: analyzeWithFallback (🆕 AGGIUNGI QUI)
-         ↓
-Riga ~330: analyzePhoto (🔄 SOSTITUISCI COMPLETAMENTE)
-
   const MarkdownDisplay = ({ content }: { content: string }) => {
     const sections = content.split(/\n/);
     return (
