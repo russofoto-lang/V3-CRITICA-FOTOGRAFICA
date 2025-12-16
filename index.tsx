@@ -268,12 +268,57 @@ const App = () => {
   const incrementSelection = () => setSelectionCount(p => Math.min(p + 1, 20));
   const decrementSelection = () => setSelectionCount(p => Math.max(p - 1, 1));
 
+  const resizeImage = (file: File, maxWidth = 1920, maxHeight = 1920, quality = 0.85): Promise<Blob> => {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      
+      img.onload = () => {
+        let { width, height } = img;
+        
+        if (width > maxWidth || height > maxHeight) {
+          if (width > height) {
+            height = (height * maxWidth) / width;
+            width = maxWidth;
+          } else {
+            width = (width * maxHeight) / height;
+            height = maxHeight;
+          }
+        }
+        
+        canvas.width = width;
+        canvas.height = height;
+        ctx?.drawImage(img, 0, 0, width, height);
+        
+        canvas.toBlob(
+          (blob) => blob ? resolve(blob) : reject(new Error('Resize failed')),
+          file.type,
+          quality
+        );
+      };
+      
+      img.onerror = reject;
+      img.src = URL.createObjectURL(file);
+    });
+  };
+
   const fileToGenerativePart = async (file: File) => {
+    let processedFile: File | Blob = file;
+    
+    // Ridimensiona se > 2MB
+    if (file.size > 2 * 1024 * 1024) {
+      console.log(`📐 Ridimensionamento: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)}MB)`);
+      processedFile = await resizeImage(file);
+      console.log(`✅ Ridotto a: ${(processedFile.size / 1024 / 1024).toFixed(2)}MB`);
+    }
+    
     const base64EncodedDataPromise = new Promise((resolve) => {
       const reader = new FileReader();
       reader.onloadend = () => resolve((reader.result as string).split(',')[1]);
-      reader.readAsDataURL(file);
+      reader.readAsDataURL(processedFile);
     });
+    
     return {
       inlineData: {
         data: await base64EncodedDataPromise as string,
@@ -282,7 +327,7 @@ const App = () => {
     };
   };
 
-  const analyzeWithFallback = async (imgs: File[], prompt: string) => {
+ const analyzeWithFallback = async (imgs: File[], prompt: string) => {
     const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_API_KEY });
     const imageParts = await Promise.all(imgs.map(fileToGenerativePart));
     
@@ -294,6 +339,8 @@ const App = () => {
       'gemini-robotics-er-1.5-preview'
     ];
     
+    let lastError = null;
+    
     for (const model of models) {
       try {
         console.log(`🔄 Tentativo: ${model}`);
@@ -304,13 +351,33 @@ const App = () => {
         console.log(`✅ Successo: ${model}`);
         return res.text || "Nessuna analisi generata.";
       } catch (err: any) {
+        lastError = err;
+        const errorMsg = err.message?.toLowerCase() || '';
         console.warn(`❌ ${model}:`, err.message);
-        if (!err.message?.includes('quota') && !err.message?.includes('limit') && !err.message?.includes('429')) {
-          throw err;
+        
+        // Continua con il prossimo modello se:
+        // - quota/rate limit (429)
+        // - model overloaded (503)
+        // - resource exhausted
+        if (
+          errorMsg.includes('quota') || 
+          errorMsg.includes('limit') || 
+          errorMsg.includes('429') ||
+          errorMsg.includes('503') ||
+          errorMsg.includes('overloaded') ||
+          errorMsg.includes('resource') ||
+          errorMsg.includes('unavailable')
+        ) {
+          continue; // Prova il prossimo modello
         }
+        
+        // Per altri errori (es. API key invalida, errore di rete), interrompi subito
+        throw err;
       }
     }
-    throw new Error('Tutti i modelli hanno raggiunto i limiti. Riprova più tardi.');
+    
+    // Se siamo qui, tutti i modelli hanno fallito
+    throw new Error('Tutti i modelli sono temporaneamente non disponibili. Riprova tra qualche minuto.');
   };
 
  const analyzePhoto = async () => {
