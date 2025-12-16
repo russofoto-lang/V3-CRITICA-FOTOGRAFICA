@@ -282,12 +282,42 @@ const App = () => {
     };
   };
 
-  const analyzePhoto = async () => {
-    if (images.length === 0) return;
+  const analyzeWithFallback = async (imgs: File[], prompt: string) => {
+    const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_API_KEY });
+    const imageParts = await Promise.all(imgs.map(fileToGenerativePart));
+    
+    const models = [
+      'gemini-2.0-flash-exp',
+      'gemini-2.5-flash',
+      'gemini-1.5-flash',
+      'gemini-1.5-flash-8b',
+      'gemini-robotics-er-1.5-preview'
+    ];
+    
+    for (const model of models) {
+      try {
+        console.log(`🔄 Tentativo: ${model}`);
+        const res = await ai.models.generateContent({
+          model,
+          contents: { parts: [...imageParts, { text: prompt }] }
+        });
+        console.log(`✅ Successo: ${model}`);
+        return res.text || "Nessuna analisi generata.";
+      } catch (err: any) {
+        console.warn(`❌ ${model}:`, err.message);
+        if (!err.message?.includes('quota') && !err.message?.includes('limit') && !err.message?.includes('429')) {
+          throw err;
+        }
+      }
+    }
+    throw new Error('Tutti i modelli hanno raggiunto i limiti. Riprova più tardi.');
+  };
 
+ const analyzePhoto = async () => {
+    if (images.length === 0) return;
     if (mode === 'curator' && images.length < selectionCount) {
-        setError(`Devi caricare almeno ${selectionCount} immagini per effettuare una selezione.`);
-        return;
+      setError(`Devi caricare almeno ${selectionCount} immagini per effettuare una selezione.`);
+      return;
     }
 
     setLoading(true);
@@ -295,87 +325,52 @@ const App = () => {
     setAnalysis(null);
 
     try {
-      const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_API_KEY });
-      const model = 'gemini-robotics-er-1.5-preview';
-      
-      const imageParts = await Promise.all(images.map(file => fileToGenerativePart(file)));
-      
-      let finalPrompt = "";
       const isEmotional = style === 'emotional';
+      let finalPrompt = "";
 
-      // COSTRUZIONE DINAMICA DEL PROMPT
       if (mode === 'single') {
-          if (isEmotional) {
-              finalPrompt = EMOTIONAL_SYSTEM_PROMPT + `\n\n[MODALITÀ: SINGOLA - EMOZIONALE]. Ho caricato 1 immagine. Parlami solo di emozioni.`;
-          } else {
-              finalPrompt = CRITIC_SYSTEM_PROMPT + `\n\n[MODALITÀ: SINGOLA - TECNICA]. Ho caricato 1 immagine. Sii spietato sulla tecnica e composizione.`;
-          }
-      } 
-      else if (mode === 'project') {
-          if (isEmotional) {
-              finalPrompt = EMOTIONAL_SYSTEM_PROMPT + 
-              `\n\n[MODALITÀ: PROGETTO - EMOZIONALE]. Ho caricato ${images.length} immagini. 
-              Considera queste immagini come strofe di un'unica poesia.
-              Invece di analizzare la tecnica, analizza il "flusso emotivo" (Emotional Flow) che scorre tra un'immagine e l'altra.
-              1. Qual è il sentimento dominante della sequenza?
-              2. Come evolve l'emozione dalla prima all'ultima foto?
-              3. C'è un'immagine che rompe l'incantesimo o cambia il tono emotivo?
-              Non dare voti, scrivi un commento critico-poetico sull'intera serie.`;
-          } else {
-              finalPrompt = CRITIC_SYSTEM_PROMPT + 
-              `\n\n[MODALITÀ: PROGETTO - TECNICA]. Ho caricato ${images.length} immagini. 
-              Analizza il portfolio seguendo le regole rigide per 'Analisi di Progetto'. Coerenza, editing e tecnica prima di tutto.`;
-          }
-      } 
-      else if (mode === 'curator') {
-          if (isEmotional) {
-              finalPrompt = CURATOR_SYSTEM_PROMPT.replace(/{N}/g, selectionCount.toString()) + 
-              `\n\n[MODALITÀ: CURATORE - EMOZIONALE]. Ho caricato ${images.length} immagini. Selezionane ${selectionCount}.
-              ATTENZIONE: Il tuo criterio di selezione NON è il mercato o la tecnica perfetta.
-              Devi selezionare le immagini che hanno la maggiore FORZA EVOCATIVA e POETICA.
-              Scegli quelle che fanno sognare, piangere o inquietare.
-              Motiva la scelta descrivendo la sensazione che ogni foto selezionata provoca, non la sua composizione.
-              Titolo della mostra: Deve essere onirico e astratto.`;
-          } else {
-              finalPrompt = CURATOR_SYSTEM_PROMPT.replace(/{N}/g, selectionCount.toString()) + 
-              `\n\n[MODALITÀ: CURATORE - MUSEALE]. Ho caricato ${images.length} immagini. Selezionane ${selectionCount}.
-              Criteri: Valore di mercato, perfezione tecnica, impatto museale. Sii rigoroso.`;
-          }
-      } 
-      else if (mode === 'editing') {
-          if (isEmotional) {
-               finalPrompt = EDITING_SYSTEM_PROMPT + 
-               `\n\n[MODALITÀ: EDITING - CREATIVO/EMOTIVO]. Ho caricato 1 immagine.
-               Il tuo obiettivo NON è correggere il bilanciamento del bianco per renderlo neutro.
-               Il tuo obiettivo è dare istruzioni per creare un ATMOSFERA (Mood).
-               Suggerisci color grading audaci (es. Cinematico, Nostalgico, Onirico, Dark).
-               Se la foto è mossa o rumorosa, spiega come esaltare questi difetti per fini artistici.
-               Trasforma la foto in un quadro.`;
-          } else {
-              finalPrompt = EDITING_SYSTEM_PROMPT + 
-              `\n\n[MODALITÀ: EDITING - TECNICO]. Ho caricato 1 immagine.
-              Correggi gli errori. Bilanciamento neutro, esposizione corretta, recupero ombre. Massimizza la qualità del file.`;
-          }
+        finalPrompt = (isEmotional ? EMOTIONAL_SYSTEM_PROMPT : CRITIC_SYSTEM_PROMPT) + 
+          `\n\n[MODALITÀ: SINGOLA - ${isEmotional ? 'EMOZIONALE' : 'TECNICA'}]. Ho caricato 1 immagine.${isEmotional ? ' Parlami solo di emozioni.' : ' Sii spietato sulla tecnica e composizione.'}`;
+      } else if (mode === 'project') {
+        finalPrompt = (isEmotional ? EMOTIONAL_SYSTEM_PROMPT : CRITIC_SYSTEM_PROMPT) + 
+          `\n\n[MODALITÀ: PROGETTO - ${isEmotional ? 'EMOZIONALE' : 'TECNICA'}]. Ho caricato ${images.length} immagini.${
+            isEmotional 
+              ? ' Considera queste immagini come strofe di una poesia. Analizza il flusso emotivo, non la tecnica.'
+              : ' Analizza il portfolio seguendo le regole rigide per Analisi di Progetto.'
+          }`;
+      } else if (mode === 'curator') {
+        finalPrompt = CURATOR_SYSTEM_PROMPT.replace(/{N}/g, selectionCount.toString()) + 
+          `\n\n[MODALITÀ: CURATORE - ${isEmotional ? 'EMOZIONALE' : 'MUSEALE'}]. Ho caricato ${images.length} immagini. Selezionane ${selectionCount}.${
+            isEmotional 
+              ? ' Scegli in base a forza evocativa e poetica, non a tecnica o mercato.'
+              : ' Criteri: Valore di mercato, perfezione tecnica, impatto museale.'
+          }`;
+      } else if (mode === 'editing') {
+        finalPrompt = EDITING_SYSTEM_PROMPT + 
+          `\n\n[MODALITÀ: EDITING - ${isEmotional ? 'CREATIVO/EMOTIVO' : 'TECNICO'}]. Ho caricato 1 immagine.${
+            isEmotional 
+              ? ' Suggerisci color grading audaci per creare atmosfera (mood).'
+              : ' Correggi gli errori. Bilanciamento neutro, esposizione corretta.'
+          }`;
       }
 
-      const response = await ai.models.generateContent({
-        model: model,
-        contents: {
-            parts: [
-                ...imageParts,
-                { text: finalPrompt }
-            ]
-        }
-      });
-
-      setAnalysis(response.text || "Nessuna analisi generata.");
+      const result = await analyzeWithFallback(images, finalPrompt);
+      setAnalysis(result);
     } catch (err: any) {
-      console.error("Error analyzing photo:", err);
-      setError("Si è verificato un errore durante l'analisi. Riprova più tardi o controlla la tua connessione.");
+      console.error("Error:", err);
+      setError(err.message || "Errore durante l'analisi. Riprova più tardi.");
     } finally {
       setLoading(false);
     }
   };
+
+## ✅ Riepilogo Posizioni
+```
+Riga ~290: fileToGenerativePart (ESISTE GIÀ - NON TOCCARE)
+         ↓
+Riga ~305: analyzeWithFallback (🆕 AGGIUNGI QUI)
+         ↓
+Riga ~330: analyzePhoto (🔄 SOSTITUISCI COMPLETAMENTE)
 
   const MarkdownDisplay = ({ content }: { content: string }) => {
     const sections = content.split(/\n/);
