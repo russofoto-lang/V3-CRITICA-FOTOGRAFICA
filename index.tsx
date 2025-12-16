@@ -3,8 +3,6 @@ import { createRoot } from 'react-dom/client';
 import { GoogleGenAI } from "@google/generative-ai";
 import { Camera, Upload, Image as ImageIcon, Loader2, Aperture, Palette, GraduationCap, AlertCircle, Layers, FileImage, Landmark, Minus, Plus, Download, Sliders, HelpCircle, Heart, Sparkles, Brain } from 'lucide-react';
 
-// --- PROMPTS ORIGINALI INTEGRALI ---
-
 const CRITIC_SYSTEM_PROMPT = `
 Sei un Critico d'Arte Fotografica di altissimo livello, esigente e senza compromessi, con una conoscenza enciclopedica del medium. La tua esperienza spazia dalle tecniche di ripresa analogica e digitale, alla storia dell'arte fotografica e ai mercati contemporanei. 
 Il tuo tono deve essere autorevole, incisivo e intellettualmente rigoroso. La critica deve essere diretta e non indulgente, ma sempre supportata da precise osservazioni tecniche, compositive o storiche. Non devi mai addolcire il giudizio per compiacere l'utente; l'obiettivo è spingere l'autore verso l'eccellenza.
@@ -44,7 +42,7 @@ Modalità Singola: Analisi Tecnica e Critica Artistica
 L'output deve essere strutturato come segue:
 
 1. Analisi Tecnica e Composizione (L'Errore Esecutivo)
-Analizza le carenze tecniche (es. esposizione, nitidezza) e gli errori compositivi. Descrivi in modo vivid l'impatto emotivo (o la sua assenza) causato da queste scelte, identificando specifici elementi visivi nell'immagine che contribuiscono o diminuiscono tale impatto.
+Analizza le carenze tecniche (es. esposizione, nitidezza) e gli errori compositivi. Descrivi in modo vivido l'impatto emotivo (o la sua assenza) causato da queste scelte, identificando specifici elementi visivi nell'immagine che contribuiscono o diminuiscono tale impatto.
 Obbligatorio: Suggerisci 1-2 impostazioni tecniche (es. tempo di scatto, apertura, ISO) o scelte compositive concrete (es. angolazione, prospettiva) che avrebbero migliorato drasticamente l'immagine, basandoti specificamente sull'analisi dei difetti appena effettuata.
 
 2. Critica Artistica e Contesto Storico (Mancanza di Voce)
@@ -57,7 +55,7 @@ Valuta l'originalità e l'atmosfera. Discuti come specifici dettagli dell'immagi
 4. Riepilogo e Punteggio
 Giudizio sintetico e implacabile. Assegna un Punteggio Globale da 1 a 10. Usa il grassetto per il voto (es. **Voto: 5/10**).
 
-5. Tre Consigli per Migliorar (Azionabili)
+5. Tre Consigli per Migliorare (Azionabili)
 Fornisci ESATTAMENTE tre suggerimenti pratici, formulati come ordini.
 IMPORTANTE: Per ogni consiglio, AGGIUNGI UNA FRASE che spieghi il BENEFICIO VISIVO IMMEDIATO derivante dall'implementazione del suggerimento (es. "Abbassa il punto di ripresa. Questo conferirà monumentalità al soggetto eliminando lo sfondo caotico.").
 
@@ -172,8 +170,6 @@ Chiudi con un pensiero gentile, rassicurante e profondo. Cosa regala questa imma
 NOTA: Non dare voti numerici. L'arte e le emozioni non si misurano con i numeri. Sii sempre costruttivo, empatico e gentile.
 `;
 
-// --- COMPONENTI UI E LOGICA APP ---
-
 const InfoTooltip = ({ text }: { text: string }) => {
   const [show, setShow] = useState(false);
   
@@ -282,10 +278,15 @@ const App = () => {
   const analyzePhoto = async () => {
     if (images.length === 0) return;
 
-    // FIX: Uso di VITE_ per Vercel
+    if (mode === 'curator' && images.length < selectionCount) {
+        setError(`Devi caricare almeno ${selectionCount} immagini per effettuare una selezione.`);
+        return;
+    }
+
+    // FIX: Prendo la chiave da import.meta.env
     const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
     if (!apiKey) {
-      setError("API Key non configurata su Vercel (VITE_GEMINI_API_KEY).");
+      setError("Chiave API non configurata (VITE_GEMINI_API_KEY).");
       return;
     }
 
@@ -294,7 +295,6 @@ const App = () => {
     setAnalysis(null);
 
     try {
-      // FIX: Istanziazione corretta SDK
       const genAI = new GoogleGenAI(apiKey);
       const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
       
@@ -303,7 +303,6 @@ const App = () => {
       let finalPrompt = "";
       const isEmotional = style === 'emotional';
 
-      // COSTRUZIONE DINAMICA DEL PROMPT (RIPRISTINATO INTEGRALE)
       if (mode === 'single') {
           if (isEmotional) {
               finalPrompt = EMOTIONAL_SYSTEM_PROMPT + `\n\n[MODALITÀ: SINGOLA - EMOZIONALE]. Ho caricato 1 immagine. Parlami solo di emozioni.`;
@@ -328,18 +327,18 @@ const App = () => {
           }
       } 
       else if (mode === 'curator') {
-          const nStr = selectionCount.toString();
+          const count = selectionCount.toString();
           if (isEmotional) {
-              finalPrompt = CURATOR_SYSTEM_PROMPT.replace(/{N}/g, nStr) + 
-              `\n\n[MODALITÀ: CURATORE - EMOZIONALE]. Ho caricato ${images.length} immagini. Selezionane ${nStr}.
+              finalPrompt = CURATOR_SYSTEM_PROMPT.replace(/{N}/g, count) + 
+              `\n\n[MODALITÀ: CURATORE - EMOZIONALE]. Ho caricato ${images.length} immagini. Selezionane ${count}.
               ATTENZIONE: Il tuo criterio di selezione NON è il mercato o la tecnica perfetta.
               Devi selezionare le immagini che hanno la maggiore FORZA EVOCATIVA e POETICA.
               Scegli quelle che fanno sognare, piangere o inquietare.
               Motiva la scelta descrivendo la sensazione che ogni foto selezionata provoca, non la sua composizione.
               Titolo della mostra: Deve essere onirico e astratto.`;
           } else {
-              finalPrompt = CURATOR_SYSTEM_PROMPT.replace(/{N}/g, nStr) + 
-              `\n\n[MODALITÀ: CURATORE - MUSEALE]. Ho caricato ${images.length} immagini. Selezionane ${nStr}.
+              finalPrompt = CURATOR_SYSTEM_PROMPT.replace(/{N}/g, count) + 
+              `\n\n[MODALITÀ: CURATORE - MUSEALE]. Ho caricato ${images.length} immagini. Selezionane ${count}.
               Criteri: Valore di mercato, perfezione tecnica, impatto museale. Sii rigoroso.`;
           }
       } 
@@ -359,7 +358,6 @@ const App = () => {
           }
       }
 
-      // FIX: Chiamata corretta per SDK @google/generative-ai
       const result = await model.generateContent([
         ...imageParts,
         { text: finalPrompt }
@@ -416,80 +414,90 @@ const App = () => {
 
   return (
     <div className="min-h-screen bg-gray-950 text-gray-100 selection:bg-indigo-500 selection:text-white">
-      <header className="border-b border-gray-800 bg-gray-900/50 backdrop-blur-md sticky top-0 z-10 px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center space-x-3 max-w-5xl mx-auto w-full justify-between">
-            <div className="flex items-center space-x-3">
-              <div className={`p-2 rounded-lg shadow-lg ${style === 'emotional' ? 'bg-rose-600 shadow-rose-500/20' : 'bg-indigo-600 shadow-indigo-500/20'}`}>
-                <Camera className="w-5 h-5 text-white" />
-              </div>
-              <h1 className="text-xl font-semibold tracking-tight">Visione <span className={style === 'emotional' ? 'text-rose-400' : 'text-indigo-400'}>AI</span></h1>
+      <header className="border-b border-gray-800 bg-gray-900/50 backdrop-blur-md sticky top-0 z-10">
+        <div className="max-w-5xl mx-auto px-6 h-16 flex items-center justify-between">
+          <div className="flex items-center space-x-3">
+            <div className={`p-2 rounded-lg shadow-lg transition-colors duration-500 ${style === 'emotional' ? 'bg-rose-600 shadow-rose-500/20' : 'bg-indigo-600 shadow-indigo-500/20'}`}>
+              <Camera className="w-5 h-5 text-white" />
             </div>
-            <div className="flex items-center space-x-3">
-              {installPrompt && (
-                  <button onClick={handleInstallClick} className="bg-gray-800 hover:bg-gray-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold border border-gray-700 flex items-center space-x-2">
-                    <Download className="w-3 h-3" /> <span>Installa App</span>
-                  </button>
-              )}
-              <div className="hidden sm:block text-xs font-medium px-3 py-1 bg-gray-800 rounded-full text-gray-400 border border-gray-700">
-                  {style === 'emotional' ? 'Lettura Poetica' : 'Analisi Tecnica'}
-              </div>
+            <h1 className="text-xl font-semibold tracking-tight">Visione <span className={style === 'emotional' ? 'text-rose-400' : 'text-indigo-400'}>AI</span></h1>
+          </div>
+          <div className="flex items-center space-x-3">
+            {installPrompt && (
+                <button onClick={handleInstallClick} className="bg-gray-800 hover:bg-gray-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold border border-gray-700 transition-colors flex items-center space-x-2">
+                  <Download className="w-3 h-3" /> <span>Installa App</span>
+                </button>
+            )}
+            <div className="hidden sm:block text-xs font-medium px-3 py-1 bg-gray-800 rounded-full text-gray-400 border border-gray-700">
+                {style === 'emotional' ? 'Lettura Poetica' : 'Analisi Tecnica'}
             </div>
           </div>
+        </div>
       </header>
 
       <main className="max-w-5xl mx-auto px-6 py-10 pb-24">
         <div className="flex flex-col items-center justify-center mb-10 space-y-8">
-            <div className="bg-gray-900 p-1.5 rounded-2xl flex flex-wrap justify-center gap-1 border border-gray-800">
+            <div className="bg-gray-900 p-1.5 rounded-2xl flex flex-wrap justify-center gap-1 border border-gray-800 shadow-lg">
                 {(['single', 'project', 'curator', 'editing'] as const).map(m => (
-                  <button key={m} onClick={() => setMode(m)} className={`px-4 lg:px-6 py-3 rounded-xl text-sm font-semibold transition-all ${mode === m ? `bg-${themeColor}-600 text-white` : 'text-gray-400 hover:text-white hover:bg-gray-800'}`}>
-                    {m.toUpperCase()}
-                  </button>
+                    <button key={m} onClick={() => setMode(m)} className={`px-4 lg:px-6 py-3 rounded-xl text-sm font-semibold flex items-center space-x-2 transition-all ${mode === m ? `bg-${themeColor}-600 text-white shadow-md` : 'text-gray-400 hover:text-white hover:bg-gray-800'}`}>
+                      {m.toUpperCase()}
+                    </button>
                 ))}
             </div>
 
-            <div className="flex items-center bg-gray-900 rounded-full p-1 border border-gray-800">
-                <button onClick={() => setStyle('technical')} className={`flex items-center space-x-2 px-4 py-2 rounded-full text-sm font-medium transition-all ${style === 'technical' ? 'bg-gray-800 text-white' : 'text-gray-500'}`}>
-                   <Aperture className="w-4 h-4" /> <span>Tecnica</span>
+            <div className="flex items-center bg-gray-900 rounded-full p-1 border border-gray-800 shadow-md">
+                <button onClick={() => setStyle('technical')} className={`flex items-center space-x-2 px-4 py-2 rounded-full text-sm font-medium transition-all ${style === 'technical' ? 'bg-gray-800 text-white shadow-sm ring-1 ring-gray-700' : 'text-gray-500 hover:text-gray-300'}`}>
+                    <Aperture className="w-4 h-4" /> <span>Tecnica</span>
                 </button>
-                <button onClick={() => setStyle('emotional')} className={`flex items-center space-x-2 px-4 py-2 rounded-full text-sm font-medium transition-all ${style === 'emotional' ? 'bg-rose-900/80 text-rose-100' : 'text-gray-500'}`}>
-                   <Heart className="w-4 h-4" /> <span>Emozionale</span>
+                <button onClick={() => setStyle('emotional')} className={`flex items-center space-x-2 px-4 py-2 rounded-full text-sm font-medium transition-all ${style === 'emotional' ? 'bg-rose-900/80 text-rose-100 shadow-sm ring-1 ring-rose-700' : 'text-gray-500 hover:text-rose-400'}`}>
+                    <Heart className="w-4 h-4" /> <span>Emozionale</span>
                 </button>
             </div>
+
             {mode === 'curator' && (
                 <div className="flex items-center space-x-3 bg-gray-900 px-4 py-2 rounded-full border border-gray-800">
-                    <span className="text-gray-400 text-xs font-semibold">OPERE DA SCEGLIERE:</span>
-                    <button onClick={decrementSelection} className="p-1 hover:bg-gray-700 rounded-lg"><Minus className="w-3 h-3" /></button>
-                    <span className="text-lg font-bold text-white w-5 text-center">{selectionCount}</span>
-                    <button onClick={incrementSelection} className="p-1 hover:bg-gray-700 rounded-lg"><Plus className="w-3 h-3" /></button>
+                    <span className="text-gray-400 text-xs uppercase tracking-wider font-semibold">Opere da selezionare</span>
+                    <div className="flex items-center space-x-2 border-l border-gray-700 pl-3">
+                        <button onClick={decrementSelection} className="p-1 hover:bg-gray-700 rounded-lg text-gray-300"><Minus className="w-3 h-3" /></button>
+                        <span className="text-lg font-bold text-white w-5 text-center">{selectionCount}</span>
+                        <button onClick={incrementSelection} className="p-1 hover:bg-gray-700 rounded-lg text-gray-300"><Plus className="w-3 h-3" /></button>
+                    </div>
                 </div>
             )}
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
           <div className="space-y-6">
-            <div className="bg-gray-900 rounded-2xl border border-gray-800 p-1 overflow-hidden h-96">
+            <div className="bg-gray-900 rounded-2xl border border-gray-800 p-1 shadow-2xl shadow-black/50 overflow-hidden">
               {previewUrls.length === 0 ? (
-                <div onClick={() => fileInputRef.current?.click()} className="h-full border-2 border-dashed border-gray-700 rounded-xl flex flex-col items-center justify-center cursor-pointer hover:bg-gray-800/50">
-                  <Upload className="w-8 h-8 text-gray-300 mb-4" />
-                  <p className="text-gray-300">Carica Immagini</p>
+                <div onClick={() => fileInputRef.current?.click()} className="h-96 border-2 border-dashed border-gray-700 rounded-xl flex flex-col items-center justify-center cursor-pointer hover:bg-gray-800/50 group px-6 text-center transition-all">
+                  <Upload className="w-8 h-8 text-gray-300 mb-4 group-hover:scale-110 transition-transform" />
+                  <p className="text-lg font-medium text-gray-300">Carica una fotografia</p>
                 </div>
               ) : (
-                <div className="relative h-full bg-black flex items-center justify-center">
-                  {mode === 'single' || mode === 'editing' ? (
-                    <img src={previewUrls[0]} className="max-h-full object-contain" />
-                  ) : (
-                    <div className="grid grid-cols-2 gap-2 p-2 w-full h-full overflow-y-auto">
-                      {previewUrls.map((url, i) => <img key={i} src={url} className="w-full h-32 object-cover rounded-lg" />)}
-                    </div>
-                  )}
-                  <button onClick={() => fileInputRef.current?.click()} className="absolute bottom-4 bg-white text-black px-4 py-2 rounded-full font-bold text-xs opacity-0 group-hover:opacity-100 transition-opacity">CAMBIA</button>
+                <div className="relative group bg-black rounded-xl overflow-hidden min-h-[384px] flex items-center justify-center">
+                    {mode === 'single' || mode === 'editing' ? (
+                        <img src={previewUrls[0]} alt="Preview" className="w-full h-auto max-h-[600px] object-contain" />
+                    ) : (
+                        <div className="grid grid-cols-2 gap-2 p-2 w-full h-full max-h-[600px] overflow-y-auto">
+                            {previewUrls.map((url, idx) => (
+                                <div key={idx} className="relative">
+                                    <img src={url} className="w-full h-32 object-cover rounded-lg" />
+                                    <div className="absolute top-1 left-1 bg-black/80 text-white text-xs font-bold w-6 h-6 flex items-center justify-center rounded-full">{idx + 1}</div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                  <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-sm">
+                        <button onClick={() => fileInputRef.current?.click()} className="bg-white text-gray-900 px-6 py-2 rounded-full font-bold">Cambia</button>
+                  </div>
                 </div>
               )}
               <input type="file" ref={fileInputRef} onChange={handleFileChange} accept="image/*" multiple={mode !== 'single' && mode !== 'editing'} className="hidden" />
             </div>
 
-            <button onClick={analyzePhoto} disabled={images.length === 0 || loading} className={`w-full py-4 px-6 rounded-xl font-bold flex items-center justify-center space-x-3 transition-all ${loading ? 'bg-gray-800' : `bg-${themeColor}-600 hover:bg-${themeColor}-500 text-white`}`}>
-              {loading ? <Loader2 className="animate-spin w-5 h-5" /> : <span>ANALIZZA</span>}
+            <button onClick={analyzePhoto} disabled={images.length === 0 || loading} className={`w-full py-4 px-6 rounded-xl font-semibold text-lg flex items-center justify-center space-x-3 transition-all ${loading ? 'bg-gray-800 text-gray-400' : `bg-${themeColor}-600 text-white shadow-lg shadow-${themeColor}-600/20`}`}>
+              {loading ? <Loader2 className="w-6 h-6 animate-spin" /> : <span>ANALIZZA</span>}
             </button>
             {error && <div className="bg-red-900/20 border border-red-900/50 rounded-xl p-4 text-red-200 text-sm">{error}</div>}
           </div>
@@ -498,7 +506,7 @@ const App = () => {
             {analysis ? <MarkdownDisplay content={analysis} /> : (
               <div className="flex flex-col items-center justify-center h-full text-gray-600 italic">
                 <Brain className="w-16 h-16 opacity-10 mb-4" />
-                <p>In attesa di caricamento...</p>
+                <p>In attesa di analisi...</p>
               </div>
             )}
           </div>
