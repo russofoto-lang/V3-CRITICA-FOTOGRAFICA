@@ -1,4 +1,5 @@
-import React, { useState, useRef, useEffect } from 'react';
+
+            import React, { useState, useRef, useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { Camera, Upload, Image as ImageIcon, Loader2, Aperture, Palette, GraduationCap, AlertCircle, Layers, FileImage, Landmark, Minus, Plus, Download, Sliders, HelpCircle, Heart, Sparkles, Brain } from 'lucide-react';
@@ -110,8 +111,7 @@ Proponi un ritaglio specifico per migliorare la composizione (es. "Taglia in 4:5
 
 C. Interventi di Luce e Tono (La Camera Oscura)
 Dai istruzioni precise su come agire sui cursori:
-*   Esposizione/Contrasto
- (es. "Sottoesponi di 0.5 stop e alza il contrasto locale").
+*   Esposizione/Contrasto (es. "Sottoesponi di 0.5 stop e alza il contrasto locale").
 *   Luci e Ombre (es. "Recupera le alte luci bruciate, apri le ombre ma mantieni il punto di nero solido").
 *   Dodge & Burn (es. "Schiarisci selettivamente il volto, scurisci gli angoli con una vignettatura leggera").
 
@@ -171,30 +171,6 @@ Chiudi con un pensiero gentile, rassicurante e profondo. Cosa regala questa imma
 NOTA: Non dare voti numerici. L'arte e le emozioni non si misurano con i numeri. Sii sempre costruttivo, empatico e gentile.
 `;
 
-const InfoTooltip = ({ text }: { text: string }) => {
-  const [show, setShow] = useState(false);
-  
-  return (
-    <div 
-      className="relative inline-flex items-center ml-1.5"
-      onClick={(e) => {
-        e.stopPropagation();
-        setShow(!show);
-      }}
-      onMouseEnter={() => setShow(true)}
-      onMouseLeave={() => setShow(false)}
-    >
-      <HelpCircle className="w-3.5 h-3.5 text-gray-500 hover:text-white transition-colors cursor-help opacity-70 hover:opacity-100" />
-      {show && (
-        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 p-2.5 bg-gray-800 border border-gray-700 text-xs text-gray-200 rounded-lg shadow-xl z-50 text-center leading-relaxed animate-in fade-in zoom-in-95 duration-200 pointer-events-none">
-          {text}
-          <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-1 border-4 border-transparent border-t-gray-800"></div>
-        </div>
-      )}
-    </div>
-  );
-};
-
 const App = () => {
   const [mode, setMode] = useState<'single' | 'project' | 'curator' | 'editing'>('single');
   const [style, setStyle] = useState<'technical' | 'emotional'>('technical');
@@ -207,7 +183,6 @@ const App = () => {
   const [installPrompt, setInstallPrompt] = useState<any>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Clear state when switching modes
   useEffect(() => {
     setImages([]);
     setPreviewUrls((prev) => {
@@ -216,11 +191,9 @@ const App = () => {
     });
     setAnalysis(null);
     setError(null);
-    // Reset selection count based on typical defaults
     setSelectionCount(mode === 'curator' ? 3 : 1);
   }, [mode]);
 
-  // Install PWA Logic
   useEffect(() => {
     const handler = (e: any) => {
       e.preventDefault();
@@ -255,13 +228,9 @@ const App = () => {
       }
 
       setImages(newFiles);
-      
-      // Cleanup old previews
       previewUrls.forEach(url => URL.revokeObjectURL(url));
-      
       const newUrls = newFiles.map(file => URL.createObjectURL(file));
       setPreviewUrls(newUrls);
-      
       setAnalysis(null);
     }
   };
@@ -307,7 +276,6 @@ const App = () => {
   const fileToGenerativePart = async (file: File) => {
     let processedFile: File | Blob = file;
     
-    // Ridimensiona se > 2MB
     if (file.size > 2 * 1024 * 1024) {
       console.log(`📐 Ridimensionamento: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)}MB)`);
       processedFile = await resizeImage(file);
@@ -322,67 +290,52 @@ const App = () => {
     
     return {
       inlineData: {
-        data: await base64EncodedDataPromise
- as string,
+        data: await base64EncodedDataPromise as string,
         mimeType: file.type,
       },
     };
   };
-    
-   const analyzeWithFallback = async (imgs: File[], prompt: string) => {
+
+  const analyzeWithFallback = async (imgs: File[], prompt: string) => {
     const genAI = new GoogleGenerativeAI(import.meta.env.VITE_API_KEY);
     const imageParts = await Promise.all(imgs.map(fileToGenerativePart));
     
-    const models = [
-      'gemini-2.0-flash-exp',
-      'gemini-1.5-flash-latest',
-      'gemini-1.5-flash-002',
-      'gemini-1.5-flash-8b-latest',
-      'gemini-1.5-pro-latest'
-    ];
+    const models = ['gemini-1.5-flash', 'gemini-1.5-flash-8b', 'gemini-1.5-pro'];
     
-    let lastError = null;
-    
-    for (const model of models) {
+    for (const modelName of models) {
       try {
-        console.log(`🔄 Tentativo: ${model}`);
-        const model = genAI.getGenerativeModel({ model: modelName }); 
-        const result = await model.generateContent([...imageParts, prompt]); 
-        const response = await result.response; const text = response.text(); 
-        console.log(`✅ Successo: ${model}`);
-
-        return res.text || "Nessuna analisi generata.";
+        console.log(`🔄 Tentativo: ${modelName}`);
+        const model = genAI.getGenerativeModel({ model: modelName });
+        const result = await model.generateContent([...imageParts, prompt]);
+        const response = await result.response;
+        const text = response.text();
+        console.log(`✅ Successo: ${modelName}`);
+        return text || "Nessuna analisi generata.";
       } catch (err: any) {
-        lastError = err;
         const errorMsg = err.message?.toLowerCase() || '';
-        console.warn(`❌ ${model}:`, err.message);
+        console.warn(`❌ ${modelName}:`, err.message?.substring(0, 100));
         
-        // Continua con il prossimo modello se:
-        // - quota/rate limit (429)
-        // - model overloaded (503)
-        // - resource exhausted
         if (
           errorMsg.includes('quota') || 
           errorMsg.includes('limit') || 
           errorMsg.includes('429') ||
           errorMsg.includes('503') ||
+          errorMsg.includes('404') ||
           errorMsg.includes('overloaded') ||
           errorMsg.includes('resource') ||
+          errorMsg.includes('exhausted') ||
           errorMsg.includes('unavailable')
         ) {
-          continue; // Prova il prossimo modello
+          continue;
         }
-        
-        // Per altri errori (es. API key invalida, errore di rete), interrompi subito
         throw err;
       }
     }
     
-    // Se siamo qui, tutti i modelli hanno fallito
-    throw new Error('Tutti i modelli sono temporaneamente non disponibili. Riprova tra qualche minuto.');
+    throw new Error('Tutti i modelli sono temporaneamente non disponibili. Verifica la tua API key o riprova tra qualche minuto.');
   };
 
- const analyzePhoto = async () => {
+  const analyzePhoto = async () => {
     if (images.length === 0) return;
     if (mode === 'curator' && images.length < selectionCount) {
       setError(`Devi caricare almeno ${selectionCount} immagini per effettuare una selezione.`);
@@ -445,7 +398,7 @@ const App = () => {
             
             const boldKeyRegex = /(\*\*.*?\*\*)/g;
             const parts = line.split(boldKeyRegex);
-            
+
             if (trimmed.startsWith('* ') || trimmed.startsWith('- ')) {
                  return (
                     <li key={idx} className="ml-4 list-disc text-gray-300">
