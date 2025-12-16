@@ -268,16 +268,119 @@ const App = () => {
   const incrementSelection = () => setSelectionCount(p => Math.min(p + 1, 20));
   const decrementSelection = () => setSelectionCount(p => Math.max(p - 1, 1));
 
-  const fileToGenerativePart = async (file: File) => {
-    const base64EncodedDataPromise = new Promise((resolve) => {
+  // --- Image resize (automatico) ---
+  // Obiettivo: ridurre upload/compute quando l'immagine è molto grande, senza cambiare output/funzionalità.
+  // Strategia: se l'immagine è già "ragionevole" (dimensioni + peso), inviamo l'originale.
+  // Altrimenti: ridimensioniamo lato client mantenendo l'orientamento EXIF (quando supportato).
+  const readFileAsDataUrl = (file: File) =>
+    new Promise<string>((resolve, reject) => {
       const reader = new FileReader();
-      reader.onloadend = () => resolve((reader.result as string).split(',')[1]);
+      reader.onloadend = () => resolve(reader.result as string);
+      reader.onerror = () => reject(new Error('Errore lettura file'));
       reader.readAsDataURL(file);
     });
+
+  const resizeImageToJpegBase64 = async (file: File, maxSide: number, quality = 0.9) => {
+    const dataUrl = await readFileAsDataUrl(file);
+
+    // Decodifica immagine
+    let bitmap: ImageBitmap | null = null;
+    try {
+      // imageOrientation mantiene rotazione EXIF su browser moderni
+      bitmap = await createImageBitmap(file, { imageOrientation: 'from-image' as any });
+    } catch {
+      bitmap = null;
+    }
+
+    let srcW: number;
+    let srcH: number;
+    let drawSource: CanvasImageSource;
+
+    if (bitmap) {
+      srcW = bitmap.width;
+      srcH = bitmap.height;
+      drawSource = bitmap;
+    } else {
+      const img = new Image();
+      img.src = dataUrl;
+      await new Promise<void>((resolve, reject) => {
+        img.onload = () => resolve();
+        img.onerror = () => reject(new Error('Errore decodifica immagine'));
+      });
+      srcW = img.naturalWidth;
+      srcH = img.naturalHeight;
+      drawSource = img;
+    }
+
+    // Se già piccola e leggera, inviamo l'originale (evita anche qualsiasi micro-variazione).
+    const tooLargeByBytes = file.size > 1.5 * 1024 * 1024; // 1.5MB
+    const tooLargeByDim = srcW > maxSide || srcH > maxSide;
+    if (!tooLargeByBytes && !tooLargeByDim) {
+      const base64 = dataUrl.split(',')[1];
+      return { mimeType: file.type, dataBase64: base64 };
+    }
+
+    // Calcola nuove dimensioni
+    const scale = Math.min(1, maxSide / Math.max(srcW, srcH));
+    const dstW = Math.max(1, Math.round(srcW * scale));
+    const dstH = Math.max(1, Math.round(srcH * scale));
+
+    // Canvas (OffscreenCanvas se disponibile)
+    let canvas: HTMLCanvasElement | OffscreenCanvas;
+    let ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D | null;
+
+    if (typeof OffscreenCanvas !== 'undefined') {
+      canvas = new OffscreenCanvas(dstW, dstH);
+      ctx = canvas.getContext('2d');
+    } else {
+      const c = document.createElement('canvas');
+      c.width = dstW;
+      c.height = dstH;
+      canvas = c;
+      ctx = c.getContext('2d');
+    }
+
+    if (!ctx) throw new Error('Canvas non disponibile');
+    // Qualità di scaling migliore (quando supportata)
+    (ctx as any).imageSmoothingEnabled = true;
+    (ctx as any).imageSmoothingQuality = 'high';
+
+    ctx.drawImage(drawSource, 0, 0, dstW, dstH);
+
+    // Esporta JPEG
+    let outDataUrl: string;
+    if (canvas instanceof OffscreenCanvas) {
+      const blob = await canvas.convertToBlob({ type: 'image/jpeg', quality });
+      const blobDataUrl = await new Promise<string>((resolve, reject) => {
+        const r = new FileReader();
+        r.onloadend = () => resolve(r.result as string);
+        r.onerror = () => reject(new Error('Errore lettura blob'));
+        r.readAsDataURL(blob);
+      });
+      outDataUrl = blobDataUrl;
+    } else {
+      outDataUrl = canvas.toDataURL('image/jpeg', quality);
+    }
+
+    if (bitmap) bitmap.close();
+
+    return { mimeType: 'image/jpeg', dataBase64: outDataUrl.split(',')[1] };
+  };
+
+  const getMaxSideForMode = () => {
+    // Scelte conservative: non peggiorano la lettura ma riducono molto peso.
+    if (mode === 'editing') return 2048;
+    if (mode === 'curator') return 1536;
+    return 1024; // single / project
+  };
+
+  const fileToGenerativePart = async (file: File) => {
+    const maxSide = getMaxSideForMode();
+    const { mimeType, dataBase64 } = await resizeImageToJpegBase64(file, maxSide, 0.9);
     return {
       inlineData: {
-        data: await base64EncodedDataPromise as string,
-        mimeType: file.type,
+        data: dataBase64,
+        mimeType,
       },
     };
   };
