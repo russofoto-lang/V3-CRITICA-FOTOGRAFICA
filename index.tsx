@@ -270,12 +270,69 @@ const App = () => {
     setError(null);
   }, [mode]);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const resizeImage = (file: File, maxSize: number = 1920): Promise<File> => {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
+
+          if (width > height) {
+            if (width > maxSize) {
+              height = (height * maxSize) / width;
+              width = maxSize;
+            }
+          } else {
+            if (height > maxSize) {
+              width = (width * maxSize) / height;
+              height = maxSize;
+            }
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx?.drawImage(img, 0, 0, width, height);
+
+          canvas.toBlob((blob) => {
+            if (blob) {
+              const resizedFile = new File([blob], file.name, {
+                type: 'image/jpeg',
+                lastModified: Date.now(),
+              });
+              resolve(resizedFile);
+            } else {
+              resolve(file);
+            }
+          }, 'image/jpeg', 0.9);
+        };
+        img.src = e.target?.result as string;
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files || e.target.files.length === 0) return;
 
-    const newFiles = Array.from(e.target.files);
-    setImages(newFiles);
-    setPreviewUrls(newFiles.map(file => URL.createObjectURL(file)));
+    const files = Array.from(e.target.files);
+    
+    // Ridimensiona le immagini grandi
+    const resizedFiles = await Promise.all(
+      files.map(file => {
+        // Solo se l'immagine è più grande di 2MB, ridimensionala
+        if (file.size > 2 * 1024 * 1024) {
+          return resizeImage(file);
+        }
+        return Promise.resolve(file);
+      })
+    );
+
+    setImages(resizedFiles);
+    setPreviewUrls(resizedFiles.map(file => URL.createObjectURL(file)));
     setAnalysis(null);
     setError(null);
   };
