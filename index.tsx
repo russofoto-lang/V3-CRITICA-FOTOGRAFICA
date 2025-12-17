@@ -1209,23 +1209,6 @@ const App = () => {
   )}
 </div>
 {/* ===== FINE MENTOR SELECTION ===== */}
-```
-
----
-
-## 📸 RIFERIMENTO VISUALE
-
-Dovrebbe trovarsi **tra**:
-- ⬆️ La sezione "Tono di Analisi" (Technical/Emotional)
-- ⬇️ La sezione "Curator Selection Count" (o l'upload se sei in modalità Single)
-
-Quindi la struttura è:
-```
-[Mode Selection]
-[Style Toggle - Technical/Emotional]
-👉 [MENTOR SELECTION] 👈 INCOLLA QUI
-[Curator Count (se curator mode)]
-[Upload + Analyze]
 
         {/* Curator Selection Count */}
         {mode === 'curator' && (
