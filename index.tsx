@@ -1,6 +1,79 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
-import { Camera, Upload, Image as ImageIcon, Loader2, Aperture, Palette, GraduationCap, AlertCircle, Layers, FileImage, Landmark, Minus, Plus, Download, Sliders, HelpCircle, Heart, Sparkles, Brain } from 'lucide-react';
+import {Camera, Upload, Image as ImageIcon, Loader2, Aperture, Palette, GraduationCap, AlertCircle, Layers, FileImage, Landmark, Minus, Plus, Download, Sliders, HelpCircle, Heart, Sparkles, Brain, User, ChevronDown} from 'lucide-react';
+
+// --- DEFINIZIONE PERSONAS FOTOGRAFI ---
+const PHOTOGRAPHER_PROMPTS: Record<string, string> = {
+  'default': "", // Usa il prompt base
+  // WEDDING
+  'jose_villa': `
+    IMPERSONA: Jose Villa.
+    STILE: Fine Art Film, analogico, toni pastello, sovraesposizione luminosa, morbidezza, romanticismo etereo.
+    FOCUS CRITICO: Cerca la luce naturale perfetta. Critica i colori troppo saturi o digitali. Se la foto non sembra scattata su Fuji 400H, spiega come ottenere quel look. Ossessionato dalla "skin tone" perfetta e dalla composizione pulita e senza tempo.
+    TONO: Calmo, elegante, sofisticato.
+  `,
+  'elizabeth_messina': `
+    IMPERSONA: Elizabeth Messina.
+    STILE: Intimo, onirico, "boudoir feel", focus morbido, luce che avvolge, connessione emotiva profonda.
+    FOCUS CRITICO: Cerca l'intimità. Se la foto è troppo rigida o posata, distruggila gentilmente. Vuole vedere l'anima, il tocco, la grana della pellicola, la luce che accarezza i soggetti.
+    TONO: Dolce, poetico, sussurrato.
+  `,
+  'corbin_gurkin': `
+    IMPERSONA: Corbin Gurkin.
+    STILE: Destination wedding, dettagli editoriali, composizione pittorica, colori vibranti ma naturali, integrazione con il paesaggio.
+    FOCUS CRITICO: Analizza come il soggetto si fonde con l'ambiente. Cerca la simmetria e il dettaglio che racconta una storia culturale. Esige una perfezione da copertina di rivista.
+    TONO: Professionale, colto, attento al design.
+  `,
+  'john_dolan': `
+    IMPERSONA: John Dolan.
+    STILE: Reportage onesto, "imperfect beauty", anti-perfezionismo, momenti rubati, luce ambiente difficile ma vera.
+    FOCUS CRITICO: Odia le pose plastiche. Cerca l'errore che rende la foto vera. Se la foto è tecnicamente perfetta ma fredda, bocciala. Cerca l'emozione grezza, il "messy" che è vita.
+    TONO: Saggio, filosofico, diretto.
+  `,
+  'kt_merry': `
+    IMPERSONA: KT Merry.
+    STILE: Editoriale di alta moda incontra la natura selvaggia. Eleganza maestosa, composizione rigorosa, luce naturale grandiosa.
+    FOCUS CRITICO: La posa deve essere regale. Lo sfondo deve essere epico. Cerca la fusione tra eleganza formale e bellezza naturale.
+    TONO: Raffinato, esigente, "High-End".
+  `,
+  'two_mann': `
+    IMPERSONA: Two Mann Studios (Erika & Lanny Mann).
+    STILE: Momenti decisivi estremi, composizioni complesse a più livelli, uso audace del flash off-camera, contrasto alto, energia pura.
+    FOCUS CRITICO: "Is this balls out?" Cerca l'azione, l'umorismo o il dramma. Se la foto è "safe" e noiosa, distruggila. Vuole vedere strati (layers), riflessi, e una luce che spacca.
+    TONO: Energetico, brutale, divertente, senza filtri.
+  `,
+  // MAESTRI
+  'ansel_adams': `
+    IMPERSONA: Ansel Adams.
+    STILE: Sistema Zonale, Paesaggio Maestoso, Bianco e Nero ad alto contrasto, F/64, nitidezza assoluta.
+    FOCUS CRITICO: Analizza l'istogramma a occhio nudo. Controlla se c'è dettaglio nella Zona 3 (ombre) e nella Zona 7 (luci). Se il bianco è bruciato o il nero è tappato, è un errore imperdonabile. La composizione deve essere sacra.
+    TONO: Accademico, severo, tecnico, reverenziale verso la natura.
+  `,
+  'cartier_bresson': `
+    IMPERSONA: Henri Cartier-Bresson.
+    STILE: Il Momento Decisivo, Geometria, Bianco e Nero, 35mm o 50mm, Niente crop (ritaglio vietato), invisibilità.
+    FOCUS CRITICO: Hai colto l'attimo fuggente in cui testa, occhio e cuore sono allineati? Se hai tagliato la foto in post, sei un fallito. La geometria guida l'occhio?
+    TONO: Intellettuale, rapido, essenziale, purista.
+  `,
+  'annie_leibovitz': `
+    IMPERSONA: Annie Leibovitz.
+    STILE: Ritratto Ambientato, Luce Drammatica (spesso artificiale mista a naturale), Narrazione epica, Colore pittorico.
+    FOCUS CRITICO: Dov'è la storia? Il soggetto sembra un eroe o un dio greco? La luce deve scolpire. Cerca la teatralità e la connessione psicologica. Lo sfondo deve raccontare chi è il soggetto.
+    TONO: Autorevole, visionario, drammatico.
+  `,
+  'steve_mccurry': `
+    IMPERSONA: Steve McCurry.
+    STILE: Colore saturo e profondo, Ritratti frontali, Occhi magnetici, Viaggio, Condizione Umana.
+    FOCUS CRITICO: Cerca il contatto visivo. I colori sono armoniosi o un casino? La composizione deve essere semplice ma potente. Cerca l'anima attraverso lo sguardo.
+    TONO: Umanista, osservatore, caldo.
+  `,
+  'helmut_newton': `
+    IMPERSONA: Helmut Newton.
+    STILE: Erotismo freddo, donne statuarie, luce dura, flash diretto, bianco e nero contrastato, voyeurismo chic.
+    FOCUS CRITICO: La foto è provocatoria? La donna è potente e dominante? Se è "dolce" o "romantica", non mi interessa. Cerca il potere, la scultura del corpo, l'architettura nuda.
+    TONO: Provocatorio, snob, tagliente, "chic".
+  `
+};
 
 const CRITIC_SYSTEM_PROMPT = `
 Sei un Critico d'Arte Fotografica di altissimo livello, esigente e senza compromessi, con una conoscenza enciclopedica del medium. La tua esperienza spazia dalle tecniche di ripresa analogica e digitale, alla storia dell'arte fotografica e ai mercati contemporanei. 
@@ -250,12 +323,14 @@ const MarkdownDisplay = ({ content }: { content: string }) => {
 const App = () => {
   const [mode, setMode] = useState<'single' | 'project' | 'curator' | 'editing'>('single');
   const [style, setStyle] = useState<'technical' | 'emotional'>('technical');
+  const [persona, setPersona] = useState<string>('default');
   const [images, setImages] = useState<File[]>([]);
   const [previewUrls, setPreviewUrls] = useState<string[]>([]);
   const [analysis, setAnalysis] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectionCount, setSelectionCount] = useState<number>(3);
+  const [installPrompt, setInstallPrompt] = useState<any>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const themeColor = 
@@ -265,10 +340,35 @@ const App = () => {
 
   useEffect(() => {
     setImages([]);
-    setPreviewUrls([]);
+    setPreviewUrls((prev) => {
+      prev.forEach((url) => URL.revokeObjectURL(url));
+      return [];
+    });
     setAnalysis(null);
     setError(null);
+    // Reset selection count based on typical defaults
+    setSelectionCount(mode === 'curator' ? 3 : 1);
   }, [mode]);
+
+
+  // Install PWA Logic
+  useEffect(() => {
+    const handler = (e: any) => {
+      e.preventDefault();
+      setInstallPrompt(e);
+    };
+    window.addEventListener('beforeinstallprompt', handler);
+    return () => window.removeEventListener('beforeinstallprompt', handler);
+  }, []);
+
+  const handleInstallClick = async () => {
+    if (!installPrompt) return;
+    installPrompt.prompt();
+    const { outcome } = await installPrompt.userChoice;
+    if (outcome === 'accepted') {
+      setInstallPrompt(null);
+    }
+  };
 
   const resizeImage = (file: File, maxSize: number = 1920): Promise<File> => {
     return new Promise((resolve) => {
@@ -315,27 +415,42 @@ const App = () => {
     });
   };
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!e.target.files || e.target.files.length === 0) return;
+  
+const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  if (!e.target.files || e.target.files.length === 0) return;
 
-    const files = Array.from(e.target.files);
-    
-    // Ridimensiona le immagini grandi
-    const resizedFiles = await Promise.all(
-      files.map(file => {
-        // Solo se l'immagine è più grande di 2MB, ridimensionala
-        if (file.size > 2 * 1024 * 1024) {
-          return resizeImage(file);
-        }
-        return Promise.resolve(file);
-      })
-    );
+  const files = Array.from(e.target.files);
 
-    setImages(resizedFiles);
-    setPreviewUrls(resizedFiles.map(file => URL.createObjectURL(file)));
-    setAnalysis(null);
+  // In modalità Singola e Laboratorio accetta 1 sola immagine
+  if ((mode === 'single' || mode === 'editing') && files.length > 1) {
+    setError("In questa modalità puoi caricare solo una foto.");
+    return;
+  }
+
+  // Ridimensiona le immagini grandi (manteniamo la logica della versione old)
+  const resizedFiles = await Promise.all(
+    files.map((file) => {
+      if (file.size > 2 * 1024 * 1024) {
+        return resizeImage(file);
+      }
+      return Promise.resolve(file);
+    })
+  );
+
+  // Revoke vecchie preview per evitare leak memoria
+  previewUrls.forEach((url) => URL.revokeObjectURL(url));
+
+  setImages(resizedFiles);
+  setPreviewUrls(resizedFiles.map((file) => URL.createObjectURL(file)));
+  setAnalysis(null);
+
+  // Validazioni specifiche Curatore
+  if (mode === 'curator' && resizedFiles.length < selectionCount) {
+    setError(`Per la modalità Curatore devi caricare almeno ${selectionCount} foto.`);
+  } else {
     setError(null);
-  };
+  }
+};
 
   const fileToGenerativePart = async (file: File) => {
     return new Promise((resolve) => {
@@ -353,22 +468,31 @@ const App = () => {
     });
   };
 
-  const analyzePhoto = async () => {
-    if (images.length === 0) return;
+  
+const analyzePhoto = async () => {
+  if (images.length === 0) return;
 
-    const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-    
-    if (!apiKey) {
-      setError("Errore: VITE_GEMINI_API_KEY non configurata. Aggiungi la chiave API nelle variabili d'ambiente.");
-      return;
-    }
+  // Vincolo Curatore: almeno N foto
+  if (mode === 'curator' && images.length < selectionCount) {
+    setError(`Devi caricare almeno ${selectionCount} immagini per effettuare una selezione.`);
+    return;
+  }
 
-    setLoading(true);
-    setError(null);
+  const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
 
-    try {
-      // Converti le immagini in base64
-      const imageParts = await Promise.all(images.map(async (file) => {
+  if (!apiKey) {
+    setError("Errore: VITE_GEMINI_API_KEY non configurata. Aggiungi la chiave API nelle variabili d'ambiente.");
+    return;
+  }
+
+  setLoading(true);
+  setError(null);
+  setAnalysis(null);
+
+  try {
+    // Converti le immagini in base64
+    const imageParts = await Promise.all(
+      images.map(async (file) => {
         return new Promise((resolve) => {
           const reader = new FileReader();
           reader.onloadend = () => {
@@ -376,58 +500,126 @@ const App = () => {
             resolve({
               inlineData: {
                 data: base64,
-                mimeType: file.type
-              }
+                mimeType: file.type,
+              },
             });
           };
           reader.readAsDataURL(file);
         });
-      }));
+      })
+    );
 
-      let systemPrompt = style === 'emotional' 
-        ? EMOTIONAL_SYSTEM_PROMPT 
-        : CRITIC_SYSTEM_PROMPT;
-      
-      if (mode === 'curator') {
-        systemPrompt = CURATOR_SYSTEM_PROMPT.replace(/{N}/g, selectionCount.toString());
-      } else if (mode === 'editing') {
-        systemPrompt = EDITING_SYSTEM_PROMPT;
+    // Persona (nuova funzionalità)
+    const personaInstructions = PHOTOGRAPHER_PROMPTS[persona] || "";
+
+    // Costruzione dinamica del prompt (senza cambiare il backend REST della versione old)
+    let finalPrompt = "";
+
+    if (mode === 'single') {
+      if (style === 'emotional') {
+        finalPrompt =
+          EMOTIONAL_SYSTEM_PROMPT +
+          `
+
+${personaInstructions}
+
+[MODALITÀ: SINGOLA - EMOZIONALE]. Ho caricato 1 immagine.`;
+      } else {
+        finalPrompt =
+          CRITIC_SYSTEM_PROMPT +
+          `
+
+${personaInstructions}
+
+[MODALITÀ: SINGOLA - TECNICA]. Ho caricato 1 immagine.`;
       }
+    } else if (mode === 'project') {
+      if (style === 'emotional') {
+        finalPrompt =
+          EMOTIONAL_SYSTEM_PROMPT +
+          `
 
-      // Usa direttamente le API REST
-      const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            contents: [{
-              parts: [
-                { text: systemPrompt },
-                ...imageParts
-              ]
-            }]
-          })
-        }
-      );
+${personaInstructions}
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error?.message || `Errore ${response.status}`);
+[MODALITÀ: PROGETTO - EMOZIONALE]. Ho caricato ${images.length} immagini. Considera la serie come un flusso emotivo. Non dare voti tecnici se non richiesto.`;
+      } else {
+        finalPrompt =
+          CRITIC_SYSTEM_PROMPT +
+          `
+
+${personaInstructions}
+
+[MODALITÀ: PROGETTO - TECNICA]. Ho caricato ${images.length} immagini. Applica le regole di coerenza, editing e ritmo narrativo.`;
       }
+    } else if (mode === 'curator') {
+      if (style === 'emotional') {
+        finalPrompt =
+          CURATOR_SYSTEM_PROMPT.replace(/{N}/g, selectionCount.toString()) +
+          `
 
-      const data = await response.json();
-      const text = data.candidates?.[0]?.content?.parts?.[0]?.text || 'Nessuna risposta generata';
-      setAnalysis(text);
-    } catch (err: any) {
-      console.error('Errore durante l\'analisi:', err);
-      setError(`Errore durante l'analisi: ${err.message || 'Errore sconosciuto'}`);
-    } finally {
-      setLoading(false);
+${personaInstructions}
+
+[MODALITÀ: CURATORE - EMOZIONALE]. Ho caricato ${images.length} immagini. Selezionane ${selectionCount} in base alla forza evocativa e poetica.`;
+      } else {
+        finalPrompt =
+          CURATOR_SYSTEM_PROMPT.replace(/{N}/g, selectionCount.toString()) +
+          `
+
+${personaInstructions}
+
+[MODALITÀ: CURATORE - MUSEALE]. Ho caricato ${images.length} immagini. Selezionane ${selectionCount} con criteri di impatto museale e rigore tecnico.`;
+      }
+    } else if (mode === 'editing') {
+      if (style === 'emotional') {
+        finalPrompt =
+          EDITING_SYSTEM_PROMPT +
+          `
+
+${personaInstructions}
+
+[MODALITÀ: EDITING - CREATIVO]. Ho caricato 1 immagine. Dai indicazioni per creare un mood (cinematico, nostalgico, onirico), non solo correzioni neutre.`;
+      } else {
+        finalPrompt =
+          EDITING_SYSTEM_PROMPT +
+          `
+
+${personaInstructions}
+
+[MODALITÀ: EDITING - TECNICO]. Ho caricato 1 immagine. Correggi errori e massimizza la qualità del file.`;
+      }
     }
-  };
+
+    // Usa direttamente le API REST (come nella versione old)
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [
+            {
+              parts: [{ text: finalPrompt }, ...imageParts],
+            },
+          ],
+        }),
+      }
+    );
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error?.message || `Errore ${response.status}`);
+    }
+
+    const data = await response.json();
+    const text = data.candidates?.[0]?.content?.parts?.[0]?.text || 'Nessuna risposta generata';
+    setAnalysis(text);
+  } catch (err: any) {
+    console.error("Errore durante l'analisi:", err);
+    setError(`Errore durante l'analisi: ${err.message || 'Errore sconosciuto'}`);
+  } finally {
+    setLoading(false);
+  }
+};
 
   const modeConfig = {
     single: {
@@ -471,11 +663,59 @@ const App = () => {
                 <p className="text-xs text-gray-400">Critica Fotografica Professionale</p>
               </div>
             </div>
-            <div className="flex items-center space-x-2 text-xs text-gray-500">
-              <GraduationCap className="w-4 h-4" />
-              <span>Powered by Gemini 2.5</span>
+            <div className="flex items-center space-x-3">
+              {installPrompt && (
+                <button
+                  onClick={handleInstallClick}
+                  className="flex items-center space-x-2 bg-gray-800 hover:bg-gray-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold border border-gray-700 transition-colors"
+                >
+                  <Download className="w-3 h-3" />
+                  <span>Installa App</span>
+                </button>
+              )}
+              <div className="flex items-center space-x-2 text-xs text-gray-500">
+                <GraduationCap className="w-4 h-4" />
+                <span>Powered by Gemini 2.5</span>
+              </div>
             </div>
           </div>
+
+<div className="mt-4">
+  <div className="flex items-center mb-4">
+    <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">Persona</h2>
+    <InfoTooltip text="Scegli un fotografo/maestro per cambiare voce e criteri di critica" />
+  </div>
+  <div className="relative">
+    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+      <User className="w-4 h-4 text-gray-400" />
+    </div>
+    <select
+      value={persona}
+      onChange={(e) => setPersona(e.target.value)}
+      className="appearance-none w-full bg-gray-900 border border-gray-800 text-white text-sm rounded-xl py-3 pl-11 pr-10 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 block shadow-md cursor-pointer hover:bg-gray-800 transition-colors"
+    >
+      <option value="default">Critico IA Standard</option>
+      <optgroup label="Wedding Masters">
+        <option value="jose_villa">Jose Villa (Fine Art Film)</option>
+        <option value="elizabeth_messina">Elizabeth Messina (Intimate)</option>
+        <option value="corbin_gurkin">Corbin Gurkin (Editorial)</option>
+        <option value="john_dolan">John Dolan (Reportage)</option>
+        <option value="kt_merry">KT Merry (High Fashion)</option>
+        <option value="two_mann">Two Mann Studios (Epic Moments)</option>
+      </optgroup>
+      <optgroup label="Grandi Maestri">
+        <option value="ansel_adams">Ansel Adams (B&N)</option>
+        <option value="cartier_bresson">Cartier-Bresson (Decisive)</option>
+        <option value="annie_leibovitz">Annie Leibovitz (Portrait)</option>
+        <option value="steve_mccurry">Steve McCurry (Color)</option>
+        <option value="helmut_newton">Helmut Newton (Flash)</option>
+      </optgroup>
+    </select>
+    <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
+      <ChevronDown className="w-4 h-4 text-gray-400" />
+    </div>
+  </div>
+</div>
         </div>
       </header>
 
