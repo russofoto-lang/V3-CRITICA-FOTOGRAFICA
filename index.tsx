@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
 import { Camera, Upload, Image as ImageIcon, Loader2, Aperture, Palette, GraduationCap, AlertCircle, Layers, FileImage, Landmark, Minus, Plus, Download, Sliders, HelpCircle, Heart, Sparkles, Brain } from 'lucide-react';
 
+
 const CRITIC_SYSTEM_PROMPT = `
 Sei un Critico d'Arte Fotografica di altissimo livello, esigente e senza compromessi, con una conoscenza enciclopedica del medium. La tua esperienza spazia dalle tecniche di ripresa analogica e digitale, alla storia dell'arte fotografica e ai mercati contemporanei. 
 Il tuo tono deve essere autorevole, incisivo e intellettualmente rigoroso. La critica deve essere diretta e non indulgente, ma sempre supportata da precise osservazioni tecniche, compositive o storiche. Non devi mai addolcire il giudizio per compiacere l'utente; l'obiettivo è spingere l'autore verso l'eccellenza.
@@ -197,6 +198,422 @@ Fornisci ESATTAMENTE tre suggerimenti pratici per amplificare la risonanza emoti
 Suggerisci un artista visivo, un poeta, un musicista o un regista che ha saputo catturare emozioni simili o affrontare temi affini con profondità struggente. Spiega brevemente la connessione e invita a studiare il loro corpus per imparare a dare voce al non detto.
 `;
 
+const MENTORS = {
+  wedding: [
+    {
+      id: 'jose-villa',
+      name: 'Jose Villa',
+      avatar: '🎞️',
+      specialty: 'Fine Art Film',
+      tagline: 'Il Romantico della Pellicola',
+      description: 'Maestro della Contax 645 e luce naturale. Ha fotografato Justin Bieber, Nick Jonas, Paris Hilton. Top 10 worldwide by Vogue.',
+      style: 'Poetico ma rigoroso',
+      bestFor: 'Romantic, Film, Natural Light',
+      difficulty: '⭐⭐⭐⭐⭐',
+    },
+    {
+      id: 'elizabeth-messina',
+      name: 'Elizabeth Messina',
+      avatar: '✨',
+      specialty: 'Luminous Portraits',
+      tagline: 'La Poetessa della Luce',
+      description: 'Ritratti intimisti "lit from within". Jessica Simpson e Lauren Conrad. Bestseller NYT author.',
+      style: 'Empatico e materno',
+      bestFor: 'Natural Light, Intimate, Emotional',
+      difficulty: '⭐⭐⭐⭐',
+    },
+    {
+      id: 'corbin-gurkin',
+      name: 'Corbin Gurkin',
+      avatar: '💎',
+      specialty: 'Celebrity Glamour',
+      tagline: 'La Regista delle Stelle',
+      description: 'Dramatic lighting e composizioni uniche. Ha fotografato Sophie Turner, Chanel Iman, Ed Westwick.',
+      style: 'Sofisticato e cinematico',
+      bestFor: 'Editorial, Celebrity, Dramatic',
+      difficulty: '⭐⭐⭐⭐⭐',
+    },
+    {
+      id: 'john-dolan',
+      name: 'John Dolan',
+      avatar: '🎬',
+      specialty: 'Timeless Film',
+      tagline: 'Il Classico Discreto',
+      description: 'Eleganza senza tempo. Ha fotografato Gwyneth Paltrow e Kate Bosworth. Film techniques master.',
+      style: 'Raffinato e invisibile',
+      bestFor: 'Classic, Film, Elegant',
+      difficulty: '⭐⭐⭐⭐',
+    },
+    {
+      id: 'kt-merry',
+      name: 'KT Merry',
+      avatar: '🌸',
+      specialty: 'Soft Editorial',
+      tagline: 'La Fashion Elegante',
+      description: 'Stile editoriale morbido con influenze fashion. Destination weddings di lusso worldwide.',
+      style: 'Sofisticato e sognante',
+      bestFor: 'Fashion, Soft, Destination',
+      difficulty: '⭐⭐⭐⭐',
+    },
+  ],
+  masters: [
+    {
+      id: 'ansel-adams',
+      name: 'Ansel Adams',
+      avatar: '⛰️',
+      specialty: 'Landscape & Tecnica',
+      tagline: 'Il Tecnico Perfezionista',
+      description: 'Maestro del Zone System e della stampa fine art. Il paesaggio come architettura di luce.',
+      style: 'Paziente ma inflessibile',
+      bestFor: 'Landscape, B&W, Technical',
+      difficulty: '⭐⭐⭐⭐⭐',
+    },
+    {
+      id: 'cartier-bresson',
+      name: 'Henri Cartier-Bresson',
+      avatar: '📸',
+      specialty: 'Street & Momento Decisivo',
+      tagline: 'Il Filosofo Geometrico',
+      description: 'Il padre della street photography. Geometria perfetta e il momento decisivo che cambia tutto.',
+      style: 'Filosofico e zen',
+      bestFor: 'Street, Candid, Geometry',
+      difficulty: '⭐⭐⭐⭐⭐',
+    },
+    {
+      id: 'annie-leibovitz',
+      name: 'Annie Leibovitz',
+      avatar: '👁️',
+      specialty: 'Ritratti & Storytelling',
+      tagline: 'La Narratrice di Storie',
+      description: 'Iconica ritrattista di celebrity. Rolling Stone, Vanity Fair. Emozione e narrativa visiva potente.',
+      style: 'Diretto e personale',
+      bestFor: 'Portraits, Celebrity, Story',
+      difficulty: '⭐⭐⭐⭐',
+    },
+    {
+      id: 'steve-mccurry',
+      name: 'Steve McCurry',
+      avatar: '🌍',
+      specialty: 'Travel & Umanità',
+      tagline: "L'Umanista Viaggiatore",
+      description: 'National Geographic legend. "Afghan Girl" author. Colori intensi e lo sguardo umano universale.',
+      style: 'Curioso e rispettoso',
+      bestFor: 'Travel, Colors, Human Eyes',
+      difficulty: '⭐⭐⭐⭐',
+    },
+    {
+      id: 'helmut-newton',
+      name: 'Helmut Newton',
+      avatar: '🖤',
+      specialty: 'Fashion Provocatorio',
+      tagline: 'Il Provocatore',
+      description: 'Audace, provocatorio, alto contrasto. Fashion e glamour senza compromessi. Vogue Paris legend.',
+      style: 'Brutale e diretto',
+      bestFor: 'Fashion, Glamour, Bold',
+      difficulty: '⭐⭐⭐⭐⭐',
+    },
+  ],
+};
+
+const MENTOR_PROMPTS: Record<string, string> = {
+  'jose-villa': `
+SEI JOSE VILLA - Maestro della Fine Art Wedding Photography
+
+IDENTITÀ:
+Sei il fotografo che ha rivoluzionato il wedding photography trasformandolo in fine art.
+Hai fotografato Justin Bieber & Hailey Baldwin, Nick Jonas & Priyanka Chopra, Paris Hilton.
+Vogue e Harper's Bazaar ti considerano tra i top 10 wedding photographers al mondo.
+PDN ti ha nominato "Most Influential Photographer of the Decade".
+
+TUO APPROCCIO:
+- Contax 645 medium format + Kodak Portra (400/160) è la tua firma
+- Luce naturale morbida e romantica (golden hour, window light, open shade)
+- "Get it right in camera" - post-produzione minimalista
+- Composizione fine art: balance, negative space, eleganza classica
+- Ogni scatto deve avere quella qualità "dreamy" della pellicola
+
+TONO:
+Poetico ma tecnicamente rigoroso. Parli come un artista che conosce perfettamente la scienza.
+Non sei aggressivo, ma sei inflessibile sulla qualità.
+
+STRUTTURA CRITICA:
+1. Analisi della Luce (è morbida? romantica? appropriata per un wedding?)
+2. Tecnica Film/Digital (se digital, potrebbe migliorare con il look film?)
+3. Composizione Fine Art (balance, eleganza, respiro)
+4. Momento Emozionale (hai catturato l'emozione genuina?)
+5. Voto: X/10
+6. Tre consigli specifici su: lighting, momento, post-produzione film-style
+
+INIZIA SEMPRE CON: "Benvenuto nel mio studio. Parliamo di luce e romanticismo..."
+FINISCI CON: Un consiglio su film stock o tecnica di lighting naturale specifica.
+
+ESEMPI DI FRASI TIPICHE:
+"Il Portra 400 avrebbe salvato questi toni pelle..."
+"La golden hour mediterranea è così particolare che non puoi ignorarla..."
+"Questa luce è troppo dura - avresti dovuto cercare l'open shade..."
+"La composizione è promettente, ma il momento emotivo manca. Aspetta."
+`,
+
+  'elizabeth-messina': `
+SEI ELIZABETH MESSINA - La Poetessa della Luce Naturale
+
+IDENTITÀ:
+Sei una delle fotografe più rispettate al mondo, specializzata in ritratti "luminosi".
+Il tuo libro "The Luminous Portrait" è un bestseller NYT.
+Jessica Simpson e Lauren Conrad ti hanno scelta. Vogue ti considera tra le migliori.
+
+TUO APPROCCIO:
+- "Lit from within" - i tuoi soggetti brillano di luce propria
+- Luce naturale esclusivamente (finestre, doors, soft natural light)
+- Connessione emotiva profonda - devi CONOSCERE il soggetto
+- Composizioni pulite, bilanciate, femminili
+- Film + Digital blend per quella qualità eterea
+
+TONO:
+Materno, empatico, profondamente emotivo. Parli come una madre amorevole ma onesta.
+Non sei severa, ma sei diretta quando l'emozione manca.
+
+STRUTTURA CRITICA:
+1. Il Primo Sentire (cosa provi guardando l'immagine?)
+2. La Luce dell'Anima (è "luminosa" o piatta?)
+3. Connessione Umana (c'è intimità? vulnerabilità?)
+4. Composizione Femminile (balance, grazia, pulizia)
+5. Voto: X/10
+6. Consigli su: connessione emotiva, lighting naturale, momento di vulnerabilità
+
+INIZIA SEMPRE CON: "Parliamo di luce e anima..."
+FINISCI CON: Una riflessione su come creare connessione e catturare la vera essenza.
+
+ESEMPI DI FRASI TIPICHE:
+"Guardo questa immagine e sento... distanza..."
+"Dov'è la sua anima? Non vedo quella luce interiore..."
+"Avvicinati. Parla con lei. Aspetta quel momento in cui abbassa la guardia..."
+"La luce naturale la abbraccerà con grazia - trova una finestra..."
+`,
+
+  'corbin-gurkin': `
+SEI CORBIN GURKIN - La Regista delle Celebrity Weddings
+
+IDENTITÀ:
+Hai fotografato Sophie Turner & Joe Jonas, Chanel Iman, Ed Westwick, Ashley Tisdale.
+Il tuo stile mescola spontaneità sofisticata e dramatic lighting da cinema.
+
+TUO APPROCCIO:
+- Lighting drammatico con elementi compositivi unici
+- Ogni foto deve sembrare un frame di film
+- Spontaneità + eleganza = il tuo trademark
+- Natural light usata in modo cinematografico
+
+TONO:
+Sofisticato, cinematico, esigente come un regista. Parli di "scene" e "momenti da red carpet".
+
+FOCUS CRITICO:
+- Il lighting crea abbastanza drama?
+- La composizione è cinematografica o banale?
+- C'è quel "celebrity glamour" anche in momenti spontanei?
+
+FRASI TIPICHE:
+"Questo momento aveva potenziale da red carpet, ma il lighting lo uccide..."
+"Dove sta il drama visivo? Sembra una foto di famiglia, non un editorial..."
+"Sophie Turner avrebbe preteso più sofisticazione in questa inquadratura..."
+`,
+
+  'john-dolan': `
+SEI JOHN DOLAN - Il Maestro dell'Eleganza Discreta
+
+IDENTITÀ:
+Hai fotografato Gwyneth Paltrow, Kate Bosworth, AnnaSophia Robb.
+Il tuo stile: refined, unobtrusive, timeless film elegance.
+
+TUO APPROCCIO:
+- Film photography tradizionale
+- Discrezione assoluta - il fotografo deve essere invisibile
+- Eleganza classica che resiste al tempo
+- Ogni foto deve sembrare un heirloom
+
+TONO:
+Classico, raffinato, mai invasivo. Parli con la grazia di un gentiluomo inglese.
+
+FOCUS CRITICO:
+- La foto resisterà tra 50 anni?
+- Il fotografo si è fatto sentire troppo?
+- C'è quella qualità "film" che rende tutto eterno?
+
+FRASI TIPICHE:
+"Questa composizione è troppo moderna, non resisterà al tempo..."
+"Sento la presenza del fotografo. Grave errore. Devi essere invisibile..."
+"Il film ti avrebbe dato quella qualità senza tempo che questo file digitale non ha..."
+`,
+
+  'kt-merry': `
+SEI KT MERRY - La Fashion Elegante per Weddings
+
+IDENTITÀ:
+Destination weddings di lusso con stile soft editorial.
+Il tuo background fashion si sente in ogni scatto.
+
+TUO APPROCCIO:
+- Soft, romantico, ma con occhio fashion
+- Color palette studiata come in Vogue
+- Editorial sensibility applicata ai matrimoni
+- Ogni dettaglio deve essere curato come in uno shooting
+
+TONO:
+Sofisticato ma accessibile. Parli di "mood board" e "palette".
+
+FOCUS CRITICO:
+- La palette cromatica è studiata o casuale?
+- C'è quella qualità editorial soft?
+- I dettagli sono curati come in un fashion shoot?
+
+FRASI TIPICHE:
+"La palette è caotica - avresti dovuto studiare un mood board coerente..."
+"Questo ha potenziale Vogue, ma l'esecuzione è troppo snapshot..."
+"Il soft romantic vibe che cerco qui è assente..."
+`,
+
+  'ansel-adams': `
+SEI ANSEL ADAMS - Il Tecnico Perfezionista
+
+IDENTITÀ:
+Maestro del paesaggio in bianco e nero e del Zone System.
+Ogni dettaglio tecnico conta. La perfezione non è negoziabile.
+
+TUO APPROCCIO:
+- Zone System per esposizione perfetta
+- Nitidezza corner-to-corner
+- Visualizzazione della stampa finale prima dello scatto
+- Il darkroom è dove la magia succede
+
+TONO:
+Paziente ma inflessibile. Non accetti compromessi tecnici.
+
+FOCUS CRITICO:
+- Esposizione perfetta? (Zone System)
+- Nitidezza impeccabile?
+- Composizione classica?
+- Stampa finale visualizzata?
+
+INIZIA CON: "Benvenuto nel mio darkroom. Analizziamo questa stampa..."
+FRASI TIPICHE:
+"L'esposizione è mezzo stop sopra - Zona IX invece di Zona VIII..."
+"La nitidezza negli angoli è inaccettabile..."
+"Avresti dovuto visualizzare la stampa finale prima di premere il pulsante..."
+`,
+
+  'cartier-bresson': `
+SEI HENRI CARTIER-BRESSON - Il Filosofo Geometrico
+
+IDENTITÀ:
+Il padre della street photography e del "momento decisivo".
+La Leica è un'estensione del tuo occhio.
+
+TUO APPROCCIO:
+- Il momento decisivo (1/125 di secondo che cambia tutto)
+- Geometria compositiva perfetta
+- Non ritagliare MAI - componi in camera
+- Discrezione totale
+
+TONO:
+Filosofico, quasi zen. Parli di fotografia come meditazione.
+
+FOCUS CRITICO:
+- Il momento decisivo è stato catturato?
+- La geometria è perfetta o approssimativa?
+- Il fotografo era discreto o invadente?
+
+INIZIA CON: "Ah, vedo che hai provato a catturare la strada..."
+FRASI TIPICHE:
+"Il momento c'era, ma tu eri in ritardo di 1/125 di secondo..."
+"La geometria non mente. Quella linea doveva essere allineata..."
+"Sento la tua presenza. Grave errore. Devi essere un fantasma..."
+`,
+
+  'annie-leibovitz': `
+SEI ANNIE LEIBOVITZ - La Narratrice di Storie
+
+IDENTITÀ:
+Iconica ritrattista di Rolling Stone e Vanity Fair.
+Ogni ritratto è una collaborazione e racconta una storia.
+
+TUO APPROCCIO:
+- Connessione emotiva col soggetto
+- Storytelling visivo potente
+- Background che aggiungono significato
+- Luce drammatica ma naturale
+
+TONO:
+Diretto, personale, empatico. Vai dritto al punto emotivo.
+
+FOCUS CRITICO:
+- C'è connessione tra fotografo e soggetto?
+- Il background racconta o distrae?
+- Quale storia emerge?
+
+INIZIA CON: "Parliamo di questa persona..."
+FRASI TIPICHE:
+"Guardo questa persona e non sento nulla. Dov'è la storia?"
+"Il soggetto sembra a disagio - non hai creato fiducia..."
+"Il background non aggiunge nulla. Cosa racconta?"
+`,
+
+  'steve-mccurry': `
+SEI STEVE MCCURRY - L'Umanista Viaggiatore
+
+IDENTITÀ:
+National Geographic legend. Autore di "Afghan Girl".
+Colori intensi e lo sguardo umano universale.
+
+TUO APPROCCIO:
+- Colori vividi, quasi surreali
+- Gli occhi raccontano tutto
+- Rispetto culturale profondo
+- Travel photography come testimonianza umana
+
+TONO:
+Curioso, rispettoso, attento ai dettagli umani e culturali.
+
+FOCUS CRITICO:
+- Gli occhi raccontano una storia?
+- I colori sono abbastanza intensi?
+- C'è rispetto culturale?
+
+INIZIA CON: "Parliamo di umanità e colori..."
+FRASI TIPICHE:
+"Gli occhi raccontano storie. Questi occhi cosa dicono?"
+"I colori sono piatti - dove sta quella intensità National Geographic?"
+"Vedo la scena, ma non sento la cultura. Manca il contesto..."
+`,
+
+  'helmut-newton': `
+SEI HELMUT NEWTON - Il Provocatore
+
+IDENTITÀ:
+Fashion provocatorio, alto contrasto, audacia assoluta.
+Vogue Paris legend. No timidity allowed.
+
+TUO APPROCCIO:
+- Bold, dramatic, provocatorio
+- Alto contrasto e tensione visiva
+- Fashion e glamour senza compromessi
+- Il "pericolo" deve essere visibile
+
+TONO:
+Brutalmente diretto, senza filtri. "Timido" è un insulto.
+
+FOCUS CRITICO:
+- Dov'è la tensione visiva?
+- È abbastanza audace?
+- C'è quel "pericolo" glamour?
+
+INIZIA CON: "Questa foto è troppo timida..."
+FRASI TIPICHE:
+"Dove sta la tensione? Dove sta il pericolo?"
+"Questo è noioso. Il glamour non è mai noioso."
+"Troppo safe. Il fashion richiede coraggio. Questo non ne ha."
+`,
+};
+
 const InfoTooltip = ({ text }: { text: string }) => {
   const [show, setShow] = useState(false);
   return (
@@ -230,7 +647,6 @@ const MarkdownDisplay = ({ content }: { content: string }) => {
         return <br key={i} />;
       }
       
-      // Handle bold text
       const boldRegex = /\*\*(.+?)\*\*/g;
       const parts = line.split(boldRegex);
       
@@ -256,6 +672,11 @@ const App = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectionCount, setSelectionCount] = useState<number>(3);
+  
+  // NUOVO: State per mentori
+  const [activeTab, setActiveTab] = useState<'wedding' | 'masters'>('wedding');
+  const [selectedMentor, setSelectedMentor] = useState<string | null>(null);
+  
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const themeColor = 
@@ -269,6 +690,13 @@ const App = () => {
     setAnalysis(null);
     setError(null);
   }, [mode]);
+
+  // NUOVO: Helper per ottenere mentore corrente
+  const getCurrentMentor = () => {
+    if (!selectedMentor) return null;
+    const allMentors = [...MENTORS.wedding, ...MENTORS.masters];
+    return allMentors.find(m => m.id === selectedMentor);
+  };
 
   const resizeImage = (file: File, maxSize: number = 1920): Promise<File> => {
     return new Promise((resolve) => {
@@ -320,10 +748,8 @@ const App = () => {
 
     const files = Array.from(e.target.files);
     
-    // Ridimensiona le immagini grandi
     const resizedFiles = await Promise.all(
       files.map(file => {
-        // Solo se l'immagine è più grande di 2MB, ridimensionala
         if (file.size > 2 * 1024 * 1024) {
           return resizeImage(file);
         }
@@ -335,22 +761,6 @@ const App = () => {
     setPreviewUrls(resizedFiles.map(file => URL.createObjectURL(file)));
     setAnalysis(null);
     setError(null);
-  };
-
-  const fileToGenerativePart = async (file: File) => {
-    return new Promise((resolve) => {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const base64 = (reader.result as string).split(',')[1];
-        resolve({
-          inlineData: {
-            data: base64,
-            mimeType: file.type
-          }
-        });
-      };
-      reader.readAsDataURL(file);
-    });
   };
 
   const analyzePhoto = async () => {
@@ -367,7 +777,6 @@ const App = () => {
     setError(null);
 
     try {
-      // Converti le immagini in base64
       const imageParts = await Promise.all(images.map(async (file) => {
         return new Promise((resolve) => {
           const reader = new FileReader();
@@ -394,9 +803,14 @@ const App = () => {
         systemPrompt = EDITING_SYSTEM_PROMPT;
       }
 
-      // Usa direttamente le API REST
+      // NUOVO: Aggiungi prompt mentore se selezionato
+      if (selectedMentor && MENTOR_PROMPTS[selectedMentor]) {
+        const mentorPrompt = MENTOR_PROMPTS[selectedMentor];
+        systemPrompt = `${mentorPrompt}\n\n---\n\nUSA QUESTE LINEE GUIDA COME BASE (ma mantieni il tuo tono e personalità):\n${systemPrompt}`;
+      }
+
       const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+        `https://generativelanguage.googleapis.com/v1/models/gemini-2.0-flash-exp:generateContent?key=${apiKey}`,
         {
           method: 'POST',
           headers: {
@@ -473,7 +887,7 @@ const App = () => {
             </div>
             <div className="flex items-center space-x-2 text-xs text-gray-500">
               <GraduationCap className="w-4 h-4" />
-              <span>Powered by Gemini 2.5</span>
+              <span>Powered by Gemini 2.0</span>
             </div>
           </div>
         </div>
@@ -543,6 +957,238 @@ const App = () => {
             </button>
           </div>
         </div>
+
+        {/* ===== MENTOR SELECTION - VERSIONE IBRIDA ===== */}
+        <div className="mb-8">
+          <div className="flex items-center mb-4">
+            <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">
+              Scegli il Tuo Mentore
+            </h2>
+            <InfoTooltip text="Ricevi una critica personalizzata nello stile di un maestro della fotografia" />
+          </div>
+
+          {/* MOBILE VERSION - Dropdown */}
+          <div className="md:hidden space-y-3">
+            <select
+              value={activeTab}
+              onChange={(e) => {
+                setActiveTab(e.target.value as 'wedding' | 'masters');
+                setSelectedMentor(null);
+              }}
+              className="w-full bg-gray-900 border border-gray-800 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-indigo-500 transition-colors"
+            >
+              <option value="wedding">🤵👰 Wedding Masters</option>
+              <option value="masters">📷 Photography Legends</option>
+            </select>
+
+            <select
+              value={selectedMentor || ''}
+              onChange={(e) => setSelectedMentor(e.target.value || null)}
+              className="w-full bg-gray-900 border border-gray-800 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-indigo-500 transition-colors"
+            >
+              <option value="">🤖 Nessun Mentore (AI Generico)</option>
+              {MENTORS[activeTab].map((mentor) => (
+                <option key={mentor.id} value={mentor.id}>
+                  {mentor.avatar} {mentor.name} - {mentor.specialty}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* DESKTOP VERSION - Tabs + Grid */}
+          <div className="hidden md:block">
+            {/* Tab Navigation */}
+            <div className="flex space-x-2 mb-6 border-b border-gray-800">
+              <button
+                onClick={() => {
+                  setActiveTab('wedding');
+                  setSelectedMentor(null);
+                }}
+                className={`pb-3 px-4 font-semibold text-sm transition-all relative ${
+                  activeTab === 'wedding'
+                    ? 'text-white'
+                    : 'text-gray-500 hover:text-gray-300'
+                }`}
+              >
+                🤵👰 Wedding Masters
+                {activeTab === 'wedding' && (
+                  <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-rose-500 to-pink-500" />
+                )}
+              </button>
+              
+              <button
+                onClick={() => {
+                  setActiveTab('masters');
+                  setSelectedMentor(null);
+                }}
+                className={`pb-3 px-4 font-semibold text-sm transition-all relative ${
+                  activeTab === 'masters'
+                    ? 'text-white'
+                    : 'text-gray-500 hover:text-gray-300'
+                }`}
+              >
+                📷 Photography Legends
+                {activeTab === 'masters' && (
+                  <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-indigo-500 to-purple-500" />
+                )}
+              </button>
+            </div>
+
+            {/* Mentor Cards Grid */}
+            <div className="grid grid-cols-5 gap-3 mb-4">
+              {MENTORS[activeTab].map((mentor) => {
+                const isSelected = selectedMentor === mentor.id;
+                return (
+                  <button
+                    key={mentor.id}
+                    onClick={() => setSelectedMentor(isSelected ? null : mentor.id)}
+                    className={`relative p-4 rounded-xl border-2 transition-all hover:scale-105 ${
+                      isSelected
+                        ? activeTab === 'wedding'
+                          ? 'border-rose-500 bg-rose-500/10 shadow-lg shadow-rose-500/20'
+                          : 'border-indigo-500 bg-indigo-500/10 shadow-lg shadow-indigo-500/20'
+                        : 'border-gray-800 bg-gray-900 hover:border-gray-700'
+                    }`}
+                  >
+                    {isSelected && (
+                      <div className={`absolute -top-2 -right-2 w-6 h-6 rounded-full flex items-center justify-center ${
+                        activeTab === 'wedding' ? 'bg-rose-500' : 'bg-indigo-500'
+                      }`}>
+                        <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                      </div>
+                    )}
+                    
+                    <div className="text-4xl mb-2">{mentor.avatar}</div>
+                    <div className="text-sm font-bold text-white mb-1 line-clamp-1">
+                      {mentor.name}
+                    </div>
+                    <div className="text-xs text-gray-500 mb-2">
+                      {mentor.difficulty}
+                    </div>
+                    <div className={`text-xs px-2 py-1 rounded ${
+                      isSelected
+                        ? activeTab === 'wedding'
+                          ? 'bg-rose-500/20 text-rose-300'
+                          : 'bg-indigo-500/20 text-indigo-300'
+                        : 'bg-gray-800 text-gray-400'
+                    }`}>
+                      {mentor.specialty}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* "Nessun Mentore" button */}
+            <button
+              onClick={() => setSelectedMentor(null)}
+              className={`w-full py-3 px-4 rounded-lg border-2 transition-all text-sm font-medium ${
+                !selectedMentor
+                  ? 'border-gray-600 bg-gray-700 text-white'
+                  : 'border-gray-800 bg-gray-900 text-gray-400 hover:border-gray-700'
+              }`}
+            >
+              🤖 Nessun Mentore (AI Generico)
+            </button>
+          </div>
+
+          {/* Mentor Preview Card (sia mobile che desktop) */}
+          {selectedMentor && getCurrentMentor() && (
+            <div className={`mt-6 bg-gradient-to-br rounded-xl border-2 p-6 shadow-2xl transition-all ${
+              activeTab === 'wedding'
+                ? 'from-gray-900 to-rose-950/30 border-rose-500/30'
+                : 'from-gray-900 to-indigo-950/30 border-indigo-500/30'
+            }`}>
+              <div className="flex items-start space-x-4">
+                <div className="flex-shrink-0">
+                  <div className={`w-16 md:w-20 h-16 md:h-20 rounded-2xl flex items-center justify-center text-4xl md:text-5xl shadow-lg ${
+                    activeTab === 'wedding'
+                      ? 'bg-gradient-to-br from-rose-500 to-pink-600'
+                      : 'bg-gradient-to-br from-indigo-500 to-purple-600'
+                  }`}>
+                    {getCurrentMentor()!.avatar}
+                  </div>
+                </div>
+                
+                <div className="flex-1">
+                  <div className="flex items-start justify-between mb-2">
+                    <div>
+                      <h3 className="text-xl md:text-2xl font-bold text-white mb-1">
+                        {getCurrentMentor()!.name}
+                      </h3>
+                      <p className={`text-sm font-semibold ${
+                        activeTab === 'wedding' ? 'text-rose-400' : 'text-indigo-400'
+                      }`}>
+                        {getCurrentMentor()!.tagline}
+                      </p>
+                    </div>
+                    <span className="text-xs text-gray-500 bg-gray-800 px-2 py-1 rounded hidden md:inline">
+                      {getCurrentMentor()!.difficulty}
+                    </span>
+                  </div>
+                  
+                  <p className="text-sm text-gray-300 mb-4 leading-relaxed">
+                    {getCurrentMentor()!.description}
+                  </p>
+                  
+                  <div className="flex flex-wrap gap-2 mb-4">
+                    {getCurrentMentor()!.bestFor.split(', ').map((tag, i) => (
+                      <span
+                        key={i}
+                        className={`text-xs px-3 py-1 rounded-full font-medium ${
+                          activeTab === 'wedding'
+                            ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
+                            : 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30'
+                        }`}
+                      >
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                  
+                  <div className="flex items-center space-x-2 text-xs">
+                    <span className="px-3 py-1.5 bg-gray-800 rounded-lg text-gray-400 border border-gray-700">
+                      <span className="text-gray-500">Stile:</span>{' '}
+                      <span className="text-white font-medium">{getCurrentMentor()!.style}</span>
+                    </span>
+                  </div>
+                </div>
+              </div>
+              
+              <div className={`mt-5 pt-5 border-t flex items-start space-x-3 ${
+                activeTab === 'wedding' ? 'border-rose-500/20' : 'border-indigo-500/20'
+              }`}>
+                <AlertCircle className={`w-5 h-5 flex-shrink-0 ${
+                  activeTab === 'wedding' ? 'text-rose-400' : 'text-indigo-400'
+                }`} />
+                <div>
+                  <p className="text-sm text-gray-300 mb-1">
+                    <span className="font-semibold text-white">
+                      {getCurrentMentor()!.name}
+                    </span>{' '}
+                    sarà{' '}
+                    <span className={`font-bold ${
+                      getCurrentMentor()!.difficulty === '⭐⭐⭐⭐⭐'
+                        ? 'text-red-400'
+                        : 'text-yellow-400'
+                    }`}>
+                      {getCurrentMentor()!.difficulty === '⭐⭐⭐⭐⭐'
+                        ? 'estremamente severo'
+                        : 'molto esigente'}
+                    </span>{' '}
+                    nella critica
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    Preparati a ricevere feedback diretto e senza compromessi
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+        {/* ===== FINE MENTOR SELECTION ===== */}
 
         {/* Curator Selection Count */}
         {mode === 'curator' && (
@@ -675,13 +1321,15 @@ const App = () => {
                     <Brain className="w-6 h-6" />
                   )}
                   <span>
-                    {mode === 'single'
-                      ? 'Analizza Scatto'
-                      : mode === 'curator'
-                        ? `Seleziona le migliori ${selectionCount}`
-                        : mode === 'editing'
-                          ? 'Genera Istruzioni'
-                          : 'Analizza Portfolio'}
+                    {selectedMentor 
+                      ? `Consulta ${getCurrentMentor()!.name}`
+                      : mode === 'single'
+                        ? 'Analizza Scatto'
+                        : mode === 'curator'
+                          ? `Seleziona le migliori ${selectionCount}`
+                          : mode === 'editing'
+                            ? 'Genera Istruzioni'
+                            : 'Analizza Portfolio'}
                   </span>
                 </>
               )}
@@ -714,12 +1362,18 @@ const App = () => {
                 <div className="flex items-center space-x-3 mb-8 pb-6 border-b border-gray-800">
                   <div
                     className={`w-10 h-10 rounded-lg flex items-center justify-center shadow-lg ${
-                      style === 'emotional'
-                        ? 'bg-gradient-to-br from-rose-500 to-pink-600'
-                        : `bg-gradient-to-br from-${themeColor}-500 to-${themeColor}-700`
+                      selectedMentor
+                        ? activeTab === 'wedding'
+                          ? 'bg-gradient-to-br from-rose-500 to-pink-600'
+                          : 'bg-gradient-to-br from-indigo-500 to-purple-600'
+                        : style === 'emotional'
+                          ? 'bg-gradient-to-br from-rose-500 to-pink-600'
+                          : `bg-gradient-to-br from-${themeColor}-500 to-${themeColor}-700`
                     }`}
                   >
-                    {style === 'emotional' ? (
+                    {selectedMentor ? (
+                      <span className="text-2xl">{getCurrentMentor()!.avatar}</span>
+                    ) : style === 'emotional' ? (
                       <Heart className="w-6 h-6 text-white" />
                     ) : (
                       <Brain className="w-6 h-6 text-white" />
@@ -727,11 +1381,21 @@ const App = () => {
                   </div>
                   <div>
                     <h2 className="text-2xl font-bold text-white">
-                      {style === 'emotional' ? 'Visione Emozionale' : 'Analisi Tecnica'}
+                      {selectedMentor 
+                        ? `Workshop con ${getCurrentMentor()!.name}`
+                        : style === 'emotional' 
+                          ? 'Visione Emozionale' 
+                          : 'Analisi Tecnica'}
                     </h2>
                     <p className="text-sm text-gray-400">
-                      Gemini 2.5 •{' '}
-                      {mode === 'curator' ? 'Curatela' : mode === 'editing' ? 'Laboratorio' : 'Critica'}{' '}
+                      Gemini 2.0 •{' '}
+                      {selectedMentor
+                        ? getCurrentMentor()!.tagline
+                        : mode === 'curator' 
+                          ? 'Curatela' 
+                          : mode === 'editing' 
+                            ? 'Laboratorio' 
+                            : 'Critica'}{' '}
                       {style === 'emotional' ? 'Poetica' : 'Razionale'}
                     </p>
                   </div>
@@ -742,7 +1406,11 @@ const App = () => {
                 <div className="mt-10 pt-6 border-t border-gray-800 flex items-center justify-between text-sm text-gray-500">
                   <div className="flex items-center space-x-2">
                     <GraduationCap className="w-4 h-4" />
-                    <span>Suggerimenti adattivi inclusi</span>
+                    <span>
+                      {selectedMentor 
+                        ? `Critica personalizzata in stile ${getCurrentMentor()!.name}`
+                        : 'Suggerimenti adattivi inclusi'}
+                    </span>
                   </div>
                   <span>Generato da Google Gemini</span>
                 </div>
