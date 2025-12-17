@@ -968,7 +968,7 @@ const App = () => {
     <InfoTooltip text="Ricevi una critica personalizzata nello stile di un maestro della fotografia" />
   </div>
 
-{/* MOBILE VERSION - Dropdown con force rerender */}
+{/* MOBILE VERSION - DUE SELECT SEPARATI */}
 <div className="block md:hidden space-y-4">
   {/* Category Selector */}
   <select
@@ -977,39 +977,43 @@ const App = () => {
       setActiveTab(e.target.value as 'wedding' | 'masters');
       setSelectedMentor(null);
     }}
-    className="w-full bg-gray-900 border-2 border-gray-800 rounded-lg px-4 py-4 text-white text-base focus:outline-none focus:border-indigo-500"
+    className="w-full bg-gray-900 border-2 border-gray-800 rounded-lg px-4 py-4 text-white text-base"
   >
     <option value="wedding">🤵👰 Wedding Masters</option>
     <option value="masters">📷 Photography Legends</option>
   </select>
 
-  {/* Mentor Selector - KEY DINAMICA PER FORCE RERENDER */}
-  <select
-    key={`mentor-${activeTab}`}
-    value={selectedMentor || ''}
-    onChange={(e) => setSelectedMentor(e.target.value || null)}
-    className="w-full bg-gray-900 border-2 border-gray-800 rounded-lg px-4 py-4 text-white text-base focus:outline-none focus:border-indigo-500"
-  >
-    <option value="">🤖 Nessun Mentore (AI Generico)</option>
-    
-    {activeTab === 'wedding' ? (
-      <>
-        <option value="jose-villa">🎞️ Jose Villa - Fine Art Film</option>
-        <option value="elizabeth-messina">✨ Elizabeth Messina - Luminous Portraits</option>
-        <option value="corbin-gurkin">💎 Corbin Gurkin - Celebrity Glamour</option>
-        <option value="john-dolan">🎬 John Dolan - Timeless Film</option>
-        <option value="kt-merry">🌸 KT Merry - Soft Editorial</option>
-      </>
-    ) : (
-      <>
-        <option value="ansel-adams">⛰️ Ansel Adams - Landscape & Tecnica</option>
-        <option value="cartier-bresson">📸 Henri Cartier-Bresson - Street</option>
-        <option value="annie-leibovitz">👁️ Annie Leibovitz - Ritratti</option>
-        <option value="steve-mccurry">🌍 Steve McCurry - Travel</option>
-        <option value="helmut-newton">🖤 Helmut Newton - Fashion</option>
-      </>
-    )}
-  </select>
+  {/* Wedding Mentors Select */}
+  {activeTab === 'wedding' && (
+    <select
+      value={selectedMentor || ''}
+      onChange={(e) => setSelectedMentor(e.target.value || null)}
+      className="w-full bg-gray-900 border-2 border-gray-800 rounded-lg px-4 py-4 text-white text-base"
+    >
+      <option value="">🤖 Nessun Mentore (AI Generico)</option>
+      <option value="jose-villa">🎞️ Jose Villa - Fine Art Film</option>
+      <option value="elizabeth-messina">✨ Elizabeth Messina - Luminous Portraits</option>
+      <option value="corbin-gurkin">💎 Corbin Gurkin - Celebrity Glamour</option>
+      <option value="john-dolan">🎬 John Dolan - Timeless Film</option>
+      <option value="kt-merry">🌸 KT Merry - Soft Editorial</option>
+    </select>
+  )}
+
+  {/* Masters Legends Select */}
+  {activeTab === 'masters' && (
+    <select
+      value={selectedMentor || ''}
+      onChange={(e) => setSelectedMentor(e.target.value || null)}
+      className="w-full bg-gray-900 border-2 border-gray-800 rounded-lg px-4 py-4 text-white text-base"
+    >
+      <option value="">🤖 Nessun Mentore (AI Generico)</option>
+      <option value="ansel-adams">⛰️ Ansel Adams - Landscape & Tecnica</option>
+      <option value="cartier-bresson">📸 Henri Cartier-Bresson - Street</option>
+      <option value="annie-leibovitz">👁️ Annie Leibovitz - Ritratti</option>
+      <option value="steve-mccurry">🌍 Steve McCurry - Travel</option>
+      <option value="helmut-newton">🖤 Helmut Newton - Fashion</option>
+    </select>
+  )}
 </div>
   
   {/* DESKTOP VERSION - Tabs + Grid (>= md breakpoint = 768px) */}
