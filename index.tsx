@@ -968,7 +968,7 @@ const App = () => {
     <InfoTooltip text="Ricevi una critica personalizzata nello stile di un maestro della fotografia" />
   </div>
 
- {/* MOBILE VERSION - Dropdown (< md breakpoint = 768px) */}
+{/* MOBILE VERSION - Dropdown con force rerender */}
 <div className="block md:hidden space-y-4">
   {/* Category Selector */}
   <select
@@ -983,15 +983,16 @@ const App = () => {
     <option value="masters">📷 Photography Legends</option>
   </select>
 
-  {/* Mentor Selector */}
+  {/* Mentor Selector - KEY DINAMICA PER FORCE RERENDER */}
   <select
+    key={`mentor-${activeTab}`}
     value={selectedMentor || ''}
     onChange={(e) => setSelectedMentor(e.target.value || null)}
     className="w-full bg-gray-900 border-2 border-gray-800 rounded-lg px-4 py-4 text-white text-base focus:outline-none focus:border-indigo-500"
   >
     <option value="">🤖 Nessun Mentore (AI Generico)</option>
     
-    {activeTab === 'wedding' && (
+    {activeTab === 'wedding' ? (
       <>
         <option value="jose-villa">🎞️ Jose Villa - Fine Art Film</option>
         <option value="elizabeth-messina">✨ Elizabeth Messina - Luminous Portraits</option>
@@ -999,9 +1000,7 @@ const App = () => {
         <option value="john-dolan">🎬 John Dolan - Timeless Film</option>
         <option value="kt-merry">🌸 KT Merry - Soft Editorial</option>
       </>
-    )}
-    
-    {activeTab === 'masters' && (
+    ) : (
       <>
         <option value="ansel-adams">⛰️ Ansel Adams - Landscape & Tecnica</option>
         <option value="cartier-bresson">📸 Henri Cartier-Bresson - Street</option>
@@ -1012,7 +1011,7 @@ const App = () => {
     )}
   </select>
 </div>
-
+  
   {/* DESKTOP VERSION - Tabs + Grid (>= md breakpoint = 768px) */}
   <div className="hidden md:block">
     {/* Tab Navigation */}
