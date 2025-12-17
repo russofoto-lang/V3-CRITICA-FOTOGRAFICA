@@ -509,7 +509,7 @@ const analyzePhoto = async () => {
       })
     );
 
-    // Scegli il critico (nuova funzionalità)
+    // Persona (nuova funzionalità)
     const personaInstructions = PHOTOGRAPHER_PROMPTS[persona] || "";
 
     // Costruzione dinamica del prompt (senza cambiare il backend REST della versione old)
@@ -590,27 +590,84 @@ ${personaInstructions}
     }
 
     // Usa direttamente le API REST (come nella versione old)
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [
-            {
-              parts: [{ text: finalPrompt }, ...imageParts],
-            },
-          ],
-        }),
+// Nota: Google può rispondere con 503/429 ("model overloaded" / rate limit). In quel caso facciamo retry
+// senza cambiare la logica dell'app: stesso payload, stessa chiave, stessi prompt.
+const modelsToTry = ['gemini-2.5-flash', 'gemini-1.5-flash'] as const;
+const maxAttemptsPerModel = 3;
+const baseDelayMs = 800;
+
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+let lastErr: any = null;
+let data: any = null;
+
+for (const model of modelsToTry) {
+  for (let attempt = 1; attempt <= maxAttemptsPerModel; attempt++) {
+    try {
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1/models/${model}:generateContent?key=${apiKey}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [
+              {
+                parts: [{ text: finalPrompt }, ...imageParts],
+              },
+            ],
+          }),
+        }
+      );
+
+      if (response.ok) {
+        data = await response.json();
+        lastErr = null;
+        break;
       }
-    );
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error?.message || `Errore ${response.status}`);
+      // Prova a leggere il messaggio errore senza far esplodere tutto
+      let errorMessage = `Errore ${response.status}`;
+      try {
+        const errorData = await response.json();
+        errorMessage = errorData?.error?.message || errorMessage;
+      } catch {
+        // ignore
+      }
+
+      // 503 (overloaded) / 429 (rate limit): retry con backoff
+      if (response.status === 503 || response.status === 429) {
+        lastErr = new Error(errorMessage);
+        if (attempt < maxAttemptsPerModel) {
+          await sleep(baseDelayMs * Math.pow(2, attempt - 1));
+          continue;
+        }
+        // esauriti i tentativi per questo model → passa al prossimo
+        break;
+      }
+
+      // Altri errori: non ha senso riprovare
+      throw new Error(errorMessage);
+    } catch (e: any) {
+      // Errori di rete: facciamo retry come per 503/429
+      lastErr = e;
+      if (attempt < maxAttemptsPerModel) {
+        await sleep(baseDelayMs * Math.pow(2, attempt - 1));
+        continue;
+      }
+      break;
     }
+  }
 
-    const data = await response.json();
+  if (data) break;
+}
+
+if (!data) {
+  const msg =
+    (lastErr && (lastErr.message || String(lastErr))) ||
+    "Errore durante l'analisi. Riprova tra qualche secondo.";
+  throw new Error(msg);
+}
+
     const text = data.candidates?.[0]?.content?.parts?.[0]?.text || 'Nessuna risposta generata';
     setAnalysis(text);
   } catch (err: any) {
