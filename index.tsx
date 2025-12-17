@@ -969,46 +969,50 @@ const App = () => {
   </div>
 
   {/* MOBILE VERSION - Dropdown (< md breakpoint = 768px) */}
-  <div className="block md:hidden space-y-3">
-    {/* Category Selector */}
-    <div>
-      <label className="block text-xs text-gray-500 mb-2 font-medium">
-        Categoria
-      </label>
-      <select
-        value={activeTab}
-        onChange={(e) => {
-          setActiveTab(e.target.value as 'wedding' | 'masters');
-          setSelectedMentor(null);
-        }}
-        className="w-full bg-gray-900 border-2 border-gray-800 rounded-lg px-4 py-3 text-white text-base focus:outline-none focus:border-indigo-500 transition-colors appearance-none"
-        style={{ WebkitAppearance: 'none' }}
-      >
-        <option value="wedding">🤵👰 Wedding Masters</option>
-        <option value="masters">📷 Photography Legends</option>
-      </select>
-    </div>
-
-    {/* Mentor Selector */}
-    <div>
-      <label className="block text-xs text-gray-500 mb-2 font-medium">
-        Mentore
-      </label>
-      <select
-        value={selectedMentor || ''}
-        onChange={(e) => setSelectedMentor(e.target.value || null)}
-        className="w-full bg-gray-900 border-2 border-gray-800 rounded-lg px-4 py-3 text-white text-base focus:outline-none focus:border-indigo-500 transition-colors appearance-none"
-        style={{ WebkitAppearance: 'none' }}
-      >
-        <option value="">🤖 Nessun Mentore (AI Generico)</option>
-        {MENTORS[activeTab].map((mentor) => (
-          <option key={mentor.id} value={mentor.id}>
-            {mentor.avatar} {mentor.name} - {mentor.specialty}
-          </option>
-        ))}
-      </select>
-    </div>
+<div className="block md:hidden space-y-3">
+  {/* Category Selector */}
+  <div>
+    <label className="block text-xs text-gray-500 mb-2 font-medium">
+      Categoria
+    </label>
+    <select
+      value={activeTab}
+      onChange={(e) => {
+        const newTab = e.target.value as 'wedding' | 'masters';
+        setActiveTab(newTab);
+        setSelectedMentor(null); // Reset mentor quando cambi categoria
+      }}
+      className="w-full bg-gray-900 border-2 border-gray-800 rounded-lg px-4 py-3 text-white text-base focus:outline-none focus:border-indigo-500 transition-colors"
+    >
+      <option value="wedding">🤵👰 Wedding Masters</option>
+      <option value="masters">📷 Photography Legends</option>
+    </select>
   </div>
+
+  {/* Mentor Selector */}
+  <div>
+    <label className="block text-xs text-gray-500 mb-2 font-medium">
+      Mentore {activeTab === 'wedding' ? '(Wedding)' : '(Legends)'}
+    </label>
+    <select
+      value={selectedMentor || ''}
+      onChange={(e) => setSelectedMentor(e.target.value || null)}
+      className="w-full bg-gray-900 border-2 border-gray-800 rounded-lg px-4 py-3 text-white text-base focus:outline-none focus:border-indigo-500 transition-colors"
+    >
+      <option value="">🤖 Nessun Mentore (AI Generico)</option>
+      {MENTORS[activeTab].map((mentor) => (
+        <option key={mentor.id} value={mentor.id}>
+          {mentor.avatar} {mentor.name} - {mentor.specialty}
+        </option>
+      ))}
+    </select>
+  </div>
+  
+  {/* DEBUG INFO (rimuovi dopo il test) */}
+  <div className="text-xs text-gray-500 bg-gray-800 p-2 rounded">
+    Debug: activeTab = {activeTab}, mentori disponibili = {MENTORS[activeTab].length}
+  </div>
+</div>
 
   {/* DESKTOP VERSION - Tabs + Grid (>= md breakpoint = 768px) */}
   <div className="hidden md:block">
