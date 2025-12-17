@@ -782,7 +782,7 @@ if (!data) {
 
 <div className="mt-4">
   <div className="flex items-center mb-4">
-    <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">Persona</h2>
+    <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">Scegli Master</h2>
     <InfoTooltip text="Scegli un fotografo/maestro per cambiare voce e criteri di critica" />
   </div>
   <div className="relative">
@@ -794,7 +794,7 @@ if (!data) {
       onChange={(e) => setPersona(e.target.value)}
       className="appearance-none w-full bg-gray-900 border border-gray-800 text-white text-sm rounded-xl py-3 pl-11 pr-10 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 block shadow-md cursor-pointer hover:bg-gray-800 transition-colors"
     >
-      <option value="default">Critico IA Standard</option>
+      <option value="default">Critico Fotografico AI</option>
       <optgroup label="Wedding Masters">
         <option value="jose_villa">Jose Villa (Fine Art Film)</option>
         <option value="elizabeth_messina">Elizabeth Messina (Intimate)</option>
