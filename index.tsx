@@ -968,13 +968,22 @@ const App = () => {
     <InfoTooltip text="Ricevi una critica personalizzata nello stile di un maestro della fotografia" />
   </div>
 
-{/* MOBILE VERSION - DUE SELECT SEPARATI */}
+{/* MOBILE VERSION - TEST DIAGNOSTICO */}
 <div className="block md:hidden space-y-4">
+  {/* Info Debug */}
+  <div className="bg-yellow-900 border-2 border-yellow-500 p-3 rounded text-xs">
+    <div>activeTab: <strong>{activeTab}</strong></div>
+    <div>selectedMentor: <strong>{selectedMentor || 'nessuno'}</strong></div>
+    <div>Mentori disponibili: <strong>{activeTab === 'wedding' ? '5 wedding' : '5 masters'}</strong></div>
+  </div>
+
   {/* Category Selector */}
   <select
     value={activeTab}
     onChange={(e) => {
-      setActiveTab(e.target.value as 'wedding' | 'masters');
+      const newTab = e.target.value as 'wedding' | 'masters';
+      console.log('Cambio categoria a:', newTab);
+      setActiveTab(newTab);
       setSelectedMentor(null);
     }}
     className="w-full bg-gray-900 border-2 border-gray-800 rounded-lg px-4 py-4 text-white text-base"
@@ -983,37 +992,75 @@ const App = () => {
     <option value="masters">📷 Photography Legends</option>
   </select>
 
-  {/* Wedding Mentors Select */}
+  {/* Mentor Selector Wedding */}
   {activeTab === 'wedding' && (
-    <select
-      value={selectedMentor || ''}
-      onChange={(e) => setSelectedMentor(e.target.value || null)}
-      className="w-full bg-gray-900 border-2 border-gray-800 rounded-lg px-4 py-4 text-white text-base"
-    >
-      <option value="">🤖 Nessun Mentore (AI Generico)</option>
-      <option value="jose-villa">🎞️ Jose Villa - Fine Art Film</option>
-      <option value="elizabeth-messina">✨ Elizabeth Messina - Luminous Portraits</option>
-      <option value="corbin-gurkin">💎 Corbin Gurkin - Celebrity Glamour</option>
-      <option value="john-dolan">🎬 John Dolan - Timeless Film</option>
-      <option value="kt-merry">🌸 KT Merry - Soft Editorial</option>
-    </select>
+    <div className="space-y-2">
+      <div className="text-xs text-green-400 bg-green-900 p-2 rounded">
+        ✅ Mostrando Wedding Mentors
+      </div>
+      <select
+        value={selectedMentor || ''}
+        onChange={(e) => {
+          console.log('Selezionato mentor wedding:', e.target.value);
+          setSelectedMentor(e.target.value || null);
+        }}
+        className="w-full bg-gray-900 border-2 border-green-500 rounded-lg px-4 py-4 text-white text-base"
+      >
+        <option value="">🤖 Nessun Mentore</option>
+        <option value="jose-villa">🎞️ Jose Villa</option>
+        <option value="elizabeth-messina">✨ Elizabeth Messina</option>
+        <option value="corbin-gurkin">💎 Corbin Gurkin</option>
+        <option value="john-dolan">🎬 John Dolan</option>
+        <option value="kt-merry">🌸 KT Merry</option>
+      </select>
+    </div>
   )}
 
-  {/* Masters Legends Select */}
+  {/* Mentor Selector Masters */}
   {activeTab === 'masters' && (
-    <select
-      value={selectedMentor || ''}
-      onChange={(e) => setSelectedMentor(e.target.value || null)}
-      className="w-full bg-gray-900 border-2 border-gray-800 rounded-lg px-4 py-4 text-white text-base"
-    >
-      <option value="">🤖 Nessun Mentore (AI Generico)</option>
-      <option value="ansel-adams">⛰️ Ansel Adams - Landscape & Tecnica</option>
-      <option value="cartier-bresson">📸 Henri Cartier-Bresson - Street</option>
-      <option value="annie-leibovitz">👁️ Annie Leibovitz - Ritratti</option>
-      <option value="steve-mccurry">🌍 Steve McCurry - Travel</option>
-      <option value="helmut-newton">🖤 Helmut Newton - Fashion</option>
-    </select>
+    <div className="space-y-2">
+      <div className="text-xs text-blue-400 bg-blue-900 p-2 rounded">
+        ✅ Mostrando Photography Legends
+      </div>
+      <select
+        value={selectedMentor || ''}
+        onChange={(e) => {
+          console.log('Selezionato mentor masters:', e.target.value);
+          setSelectedMentor(e.target.value || null);
+        }}
+        className="w-full bg-gray-900 border-2 border-blue-500 rounded-lg px-4 py-4 text-white text-base"
+      >
+        <option value="">🤖 Nessun Mentore</option>
+        <option value="ansel-adams">⛰️ Ansel Adams</option>
+        <option value="cartier-bresson">📸 Cartier-Bresson</option>
+        <option value="annie-leibovitz">👁️ Annie Leibovitz</option>
+        <option value="steve-mccurry">🌍 Steve McCurry</option>
+        <option value="helmut-newton">🖤 Helmut Newton</option>
+      </select>
+    </div>
   )}
+
+  {/* Lista testuale come fallback */}
+  <div className="bg-gray-800 p-3 rounded text-xs">
+    <div className="text-gray-400 mb-2">Mentori {activeTab}:</div>
+    {activeTab === 'wedding' ? (
+      <div className="space-y-1 text-white">
+        <div>• 🎞️ Jose Villa</div>
+        <div>• ✨ Elizabeth Messina</div>
+        <div>• 💎 Corbin Gurkin</div>
+        <div>• 🎬 John Dolan</div>
+        <div>• 🌸 KT Merry</div>
+      </div>
+    ) : (
+      <div className="space-y-1 text-white">
+        <div>• ⛰️ Ansel Adams</div>
+        <div>• 📸 Cartier-Bresson</div>
+        <div>• 👁️ Annie Leibovitz</div>
+        <div>• 🌍 Steve McCurry</div>
+        <div>• 🖤 Helmut Newton</div>
+      </div>
+    )}
+  </div>
 </div>
   
   {/* DESKTOP VERSION - Tabs + Grid (>= md breakpoint = 768px) */}
