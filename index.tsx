@@ -763,85 +763,86 @@ const App = () => {
     setError(null);
   };
 
-  const analyzePhoto = async () => {
-    if (images.length === 0) return;
+ const analyzePhoto = async () => {
+  if (images.length === 0) return;
 
-    const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+  const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+  
+  if (!apiKey) {
+    setError("Errore: VITE_GEMINI_API_KEY non configurata. Aggiungi la chiave API nelle variabili d'ambiente.");
+    return;
+  }
+
+  setLoading(true);
+  setError(null);
+
+  try {
+    const imageParts = await Promise.all(images.map(async (file) => {
+      return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          const base64 = (reader.result as string).split(',')[1];
+          resolve({
+            inlineData: {
+              data: base64,
+              mimeType: file.type
+            }
+          });
+        };
+        reader.readAsDataURL(file);
+      });
+    }));
+
+    let systemPrompt = style === 'emotional' 
+      ? EMOTIONAL_SYSTEM_PROMPT 
+      : CRITIC_SYSTEM_PROMPT;
     
-    if (!apiKey) {
-      setError("Errore: VITE_GEMINI_API_KEY non configurata. Aggiungi la chiave API nelle variabili d'ambiente.");
-      return;
+    if (mode === 'curator') {
+      systemPrompt = CURATOR_SYSTEM_PROMPT.replace(/{N}/g, selectionCount.toString());
+    } else if (mode === 'editing') {
+      systemPrompt = EDITING_SYSTEM_PROMPT;
     }
 
-    setLoading(true);
-    setError(null);
-
-    try {
-      const imageParts = await Promise.all(images.map(async (file) => {
-        return new Promise((resolve) => {
-          const reader = new FileReader();
-          reader.onloadend = () => {
-            const base64 = (reader.result as string).split(',')[1];
-            resolve({
-              inlineData: {
-                data: base64,
-                mimeType: file.type
-              }
-            });
-          };
-          reader.readAsDataURL(file);
-        });
-      }));
-
-      let systemPrompt = style === 'emotional' 
-        ? EMOTIONAL_SYSTEM_PROMPT 
-        : CRITIC_SYSTEM_PROMPT;
-      
-      if (mode === 'curator') {
-        systemPrompt = CURATOR_SYSTEM_PROMPT.replace(/{N}/g, selectionCount.toString());
-      } else if (mode === 'editing') {
-        systemPrompt = EDITING_SYSTEM_PROMPT;
-      }
-
-      // NUOVO: Aggiungi prompt mentore se selezionato
-      if (selectedMentor && MENTOR_PROMPTS[selectedMentor]) {
-        const mentorPrompt = MENTOR_PROMPTS[selectedMentor];
-        systemPrompt = `${mentorPrompt}\n\n---\n\nUSA QUESTE LINEE GUIDA COME BASE (ma mantieni il tuo tono e personalità):\n${systemPrompt}`;
-      }
-
-      const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1/models/gemini-2.0-flash-exp:generateContent?key=${apiKey}`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            contents: [{
-              parts: [
-                { text: systemPrompt },
-                ...imageParts
-              ]
-            }]
-          })
-        }
-      );
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error?.message || `Errore ${response.status}`);
-      }
-
-      const data = await response.json();
-      const text = data.candidates?.[0]?.content?.parts?.[0]?.text || 'Nessuna risposta generata';
-      setAnalysis(text);
-    } catch (err: any) {
-      console.error('Errore durante l\'analisi:', err);
-      setError(`Errore durante l'analisi: ${err.message || 'Errore sconosciuto'}`);
-    } finally {
-      setLoading(false);
+    // NUOVO: Aggiungi prompt mentore se selezionato
+    if (selectedMentor && MENTOR_PROMPTS[selectedMentor]) {
+      const mentorPrompt = MENTOR_PROMPTS[selectedMentor];
+      systemPrompt = `${mentorPrompt}\n\n---\n\nUSA QUESTE LINEE GUIDA COME BASE (ma mantieni il tuo tono e personalità):\n${systemPrompt}`;
     }
-  };
+
+    // ✅ FIX: Usa gemini-2.5-flash invece di gemini-2.0-flash-exp
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          contents: [{
+            parts: [
+              { text: systemPrompt },
+              ...imageParts
+            ]
+          }]
+        })
+      }
+    );
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error?.message || `Errore ${response.status}`);
+    }
+
+    const data = await response.json();
+    const text = data.candidates?.[0]?.content?.parts?.[0]?.text || 'Nessuna risposta generata';
+    setAnalysis(text);
+  } catch (err: any) {
+    console.error('Errore durante l\'analisi:', err);
+    setError(`Errore durante l'analisi: ${err.message || 'Errore sconosciuto'}`);
+  } finally {
+    setLoading(false);
+  }
+};
 
   const modeConfig = {
     single: {
