@@ -509,7 +509,7 @@ const analyzePhoto = async () => {
       })
     );
 
-    // Persona (nuova funzionalità)
+    // Scegli il critico (nuova funzionalità)
     const personaInstructions = PHOTOGRAPHER_PROMPTS[persona] || "";
 
     // Costruzione dinamica del prompt (senza cambiare il backend REST della versione old)
