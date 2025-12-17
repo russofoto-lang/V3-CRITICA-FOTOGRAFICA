@@ -959,7 +959,7 @@ const App = () => {
           </div>
         </div>
 
-        {/* ===== MENTOR SELECTION - VERSIONE IBRIDA MIGLIORATA ===== */}
+       {/* ===== MENTOR SELECTION - VERSIONE IBRIDA FINALE ===== */}
 <div className="mb-8">
   <div className="flex items-center mb-4">
     <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">
@@ -968,55 +968,55 @@ const App = () => {
     <InfoTooltip text="Ricevi una critica personalizzata nello stile di un maestro della fotografia" />
   </div>
 
-{/* MOBILE VERSION - Versione Finale */}
-<div className="block md:hidden space-y-4">
-  {/* Category Selector */}
-  <select
-    value={activeTab}
-    onChange={(e) => {
-      setActiveTab(e.target.value as 'wedding' | 'masters');
-      setSelectedMentor(null);
-    }}
-    className="w-full bg-gray-900 border-2 border-gray-800 rounded-lg px-4 py-4 text-white text-base focus:outline-none focus:border-indigo-500"
-  >
-    <option value="wedding">🤵👰 Wedding Masters</option>
-    <option value="masters">📷 Photography Legends</option>
-  </select>
-
-  {/* Mentor Selector Wedding */}
-  {activeTab === 'wedding' && (
+  {/* MOBILE VERSION - Due Select Separati */}
+  <div className="block md:hidden space-y-4">
+    {/* Category Selector */}
     <select
-      value={selectedMentor || ''}
-      onChange={(e) => setSelectedMentor(e.target.value || null)}
+      value={activeTab}
+      onChange={(e) => {
+        setActiveTab(e.target.value as 'wedding' | 'masters');
+        setSelectedMentor(null);
+      }}
       className="w-full bg-gray-900 border-2 border-gray-800 rounded-lg px-4 py-4 text-white text-base focus:outline-none focus:border-indigo-500"
     >
-      <option value="">🤖 Nessun Mentore (AI Generico)</option>
-      <option value="jose-villa">🎞️ Jose Villa - Fine Art Film</option>
-      <option value="elizabeth-messina">✨ Elizabeth Messina - Luminous Portraits</option>
-      <option value="corbin-gurkin">💎 Corbin Gurkin - Celebrity Glamour</option>
-      <option value="john-dolan">🎬 John Dolan - Timeless Film</option>
-      <option value="kt-merry">🌸 KT Merry - Soft Editorial</option>
+      <option value="wedding">🤵👰 Wedding Masters</option>
+      <option value="masters">📷 Photography Legends</option>
     </select>
-  )}
 
-  {/* Mentor Selector Masters */}
-  {activeTab === 'masters' && (
-    <select
-      value={selectedMentor || ''}
-      onChange={(e) => setSelectedMentor(e.target.value || null)}
-      className="w-full bg-gray-900 border-2 border-gray-800 rounded-lg px-4 py-4 text-white text-base focus:outline-none focus:border-indigo-500"
-    >
-      <option value="">🤖 Nessun Mentore (AI Generico)</option>
-      <option value="ansel-adams">⛰️ Ansel Adams - Landscape & Tecnica</option>
-      <option value="cartier-bresson">📸 Henri Cartier-Bresson - Street</option>
-      <option value="annie-leibovitz">👁️ Annie Leibovitz - Ritratti</option>
-      <option value="steve-mccurry">🌍 Steve McCurry - Travel</option>
-      <option value="helmut-newton">🖤 Helmut Newton - Fashion</option>
-    </select>
-  )}
-</div>
-  
-  {/* DESKTOP VERSION - Tabs + Grid (>= md breakpoint = 768px) */}
+    {/* Mentor Selector Wedding */}
+    {activeTab === 'wedding' && (
+      <select
+        value={selectedMentor || ''}
+        onChange={(e) => setSelectedMentor(e.target.value || null)}
+        className="w-full bg-gray-900 border-2 border-gray-800 rounded-lg px-4 py-4 text-white text-base focus:outline-none focus:border-indigo-500"
+      >
+        <option value="">🤖 Nessun Mentore (AI Generico)</option>
+        <option value="jose-villa">🎞️ Jose Villa - Fine Art Film</option>
+        <option value="elizabeth-messina">✨ Elizabeth Messina - Luminous Portraits</option>
+        <option value="corbin-gurkin">💎 Corbin Gurkin - Celebrity Glamour</option>
+        <option value="john-dolan">🎬 John Dolan - Timeless Film</option>
+        <option value="kt-merry">🌸 KT Merry - Soft Editorial</option>
+      </select>
+    )}
+
+    {/* Mentor Selector Masters */}
+    {activeTab === 'masters' && (
+      <select
+        value={selectedMentor || ''}
+        onChange={(e) => setSelectedMentor(e.target.value || null)}
+        className="w-full bg-gray-900 border-2 border-gray-800 rounded-lg px-4 py-4 text-white text-base focus:outline-none focus:border-indigo-500"
+      >
+        <option value="">🤖 Nessun Mentore (AI Generico)</option>
+        <option value="ansel-adams">⛰️ Ansel Adams - Landscape & Tecnica</option>
+        <option value="cartier-bresson">📸 Henri Cartier-Bresson - Street</option>
+        <option value="annie-leibovitz">👁️ Annie Leibovitz - Ritratti</option>
+        <option value="steve-mccurry">🌍 Steve McCurry - Travel</option>
+        <option value="helmut-newton">🖤 Helmut Newton - Fashion</option>
+      </select>
+    )}
+  </div>
+
+  {/* DESKTOP VERSION - Tabs + Grid */}
   <div className="hidden md:block">
     {/* Tab Navigation */}
     <div className="flex space-x-2 mb-6 border-b border-gray-800">
@@ -1115,7 +1115,7 @@ const App = () => {
     </button>
   </div>
 
-  {/* Mentor Preview Card (RESPONSIVE - sia mobile che desktop) */}
+  {/* Mentor Preview Card - RESPONSIVE */}
   {selectedMentor && getCurrentMentor() && (
     <div className={`mt-6 bg-gradient-to-br rounded-xl border-2 p-4 md:p-6 shadow-2xl transition-all ${
       activeTab === 'wedding'
@@ -1123,7 +1123,6 @@ const App = () => {
         : 'from-gray-900 to-indigo-950/30 border-indigo-500/30'
     }`}>
       <div className="flex flex-col sm:flex-row items-start space-y-4 sm:space-y-0 sm:space-x-4">
-        {/* Avatar */}
         <div className="flex-shrink-0 mx-auto sm:mx-0">
           <div className={`w-16 h-16 md:w-20 md:h-20 rounded-2xl flex items-center justify-center text-4xl md:text-5xl shadow-lg ${
             activeTab === 'wedding'
@@ -1134,7 +1133,6 @@ const App = () => {
           </div>
         </div>
         
-        {/* Info */}
         <div className="flex-1 text-center sm:text-left">
           <div className="flex flex-col sm:flex-row items-center sm:items-start justify-between mb-2">
             <div>
@@ -1156,7 +1154,6 @@ const App = () => {
             {getCurrentMentor()!.description}
           </p>
           
-          {/* Tags */}
           <div className="flex flex-wrap gap-2 mb-4 justify-center sm:justify-start">
             {getCurrentMentor()!.bestFor.split(', ').map((tag, i) => (
               <span
@@ -1172,7 +1169,6 @@ const App = () => {
             ))}
           </div>
           
-          {/* Style Info */}
           <div className="flex items-center justify-center sm:justify-start space-x-2 text-xs">
             <span className="px-3 py-1.5 bg-gray-800 rounded-lg text-gray-400 border border-gray-700">
               <span className="text-gray-500">Stile:</span>{' '}
@@ -1182,7 +1178,6 @@ const App = () => {
         </div>
       </div>
       
-      {/* Warning Badge */}
       <div className={`mt-5 pt-5 border-t flex flex-col sm:flex-row items-start space-y-2 sm:space-y-0 sm:space-x-3 ${
         activeTab === 'wedding' ? 'border-rose-500/20' : 'border-indigo-500/20'
       }`}>
