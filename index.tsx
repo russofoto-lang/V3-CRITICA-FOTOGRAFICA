@@ -959,237 +959,273 @@ const App = () => {
           </div>
         </div>
 
-        {/* ===== MENTOR SELECTION - VERSIONE IBRIDA ===== */}
-        <div className="mb-8">
-          <div className="flex items-center mb-4">
-            <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">
-              Scegli il Tuo Mentore
-            </h2>
-            <InfoTooltip text="Ricevi una critica personalizzata nello stile di un maestro della fotografia" />
-          </div>
+        {/* ===== MENTOR SELECTION - VERSIONE IBRIDA MIGLIORATA ===== */}
+<div className="mb-8">
+  <div className="flex items-center mb-4">
+    <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">
+      Scegli il Tuo Mentore
+    </h2>
+    <InfoTooltip text="Ricevi una critica personalizzata nello stile di un maestro della fotografia" />
+  </div>
 
-          {/* MOBILE VERSION - Dropdown */}
-          <div className="md:hidden space-y-3">
-            <select
-              value={activeTab}
-              onChange={(e) => {
-                setActiveTab(e.target.value as 'wedding' | 'masters');
-                setSelectedMentor(null);
-              }}
-              className="w-full bg-gray-900 border border-gray-800 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-indigo-500 transition-colors"
-            >
-              <option value="wedding">🤵👰 Wedding Masters</option>
-              <option value="masters">📷 Photography Legends</option>
-            </select>
+  {/* MOBILE VERSION - Dropdown (< md breakpoint = 768px) */}
+  <div className="block md:hidden space-y-3">
+    {/* Category Selector */}
+    <div>
+      <label className="block text-xs text-gray-500 mb-2 font-medium">
+        Categoria
+      </label>
+      <select
+        value={activeTab}
+        onChange={(e) => {
+          setActiveTab(e.target.value as 'wedding' | 'masters');
+          setSelectedMentor(null);
+        }}
+        className="w-full bg-gray-900 border-2 border-gray-800 rounded-lg px-4 py-3 text-white text-base focus:outline-none focus:border-indigo-500 transition-colors appearance-none"
+        style={{ WebkitAppearance: 'none' }}
+      >
+        <option value="wedding">🤵👰 Wedding Masters</option>
+        <option value="masters">📷 Photography Legends</option>
+      </select>
+    </div>
 
-            <select
-              value={selectedMentor || ''}
-              onChange={(e) => setSelectedMentor(e.target.value || null)}
-              className="w-full bg-gray-900 border border-gray-800 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-indigo-500 transition-colors"
-            >
-              <option value="">🤖 Nessun Mentore (AI Generico)</option>
-              {MENTORS[activeTab].map((mentor) => (
-                <option key={mentor.id} value={mentor.id}>
-                  {mentor.avatar} {mentor.name} - {mentor.specialty}
-                </option>
-              ))}
-            </select>
-          </div>
+    {/* Mentor Selector */}
+    <div>
+      <label className="block text-xs text-gray-500 mb-2 font-medium">
+        Mentore
+      </label>
+      <select
+        value={selectedMentor || ''}
+        onChange={(e) => setSelectedMentor(e.target.value || null)}
+        className="w-full bg-gray-900 border-2 border-gray-800 rounded-lg px-4 py-3 text-white text-base focus:outline-none focus:border-indigo-500 transition-colors appearance-none"
+        style={{ WebkitAppearance: 'none' }}
+      >
+        <option value="">🤖 Nessun Mentore (AI Generico)</option>
+        {MENTORS[activeTab].map((mentor) => (
+          <option key={mentor.id} value={mentor.id}>
+            {mentor.avatar} {mentor.name} - {mentor.specialty}
+          </option>
+        ))}
+      </select>
+    </div>
+  </div>
 
-          {/* DESKTOP VERSION - Tabs + Grid */}
-          <div className="hidden md:block">
-            {/* Tab Navigation */}
-            <div className="flex space-x-2 mb-6 border-b border-gray-800">
-              <button
-                onClick={() => {
-                  setActiveTab('wedding');
-                  setSelectedMentor(null);
-                }}
-                className={`pb-3 px-4 font-semibold text-sm transition-all relative ${
-                  activeTab === 'wedding'
-                    ? 'text-white'
-                    : 'text-gray-500 hover:text-gray-300'
-                }`}
-              >
-                🤵👰 Wedding Masters
-                {activeTab === 'wedding' && (
-                  <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-rose-500 to-pink-500" />
-                )}
-              </button>
-              
-              <button
-                onClick={() => {
-                  setActiveTab('masters');
-                  setSelectedMentor(null);
-                }}
-                className={`pb-3 px-4 font-semibold text-sm transition-all relative ${
-                  activeTab === 'masters'
-                    ? 'text-white'
-                    : 'text-gray-500 hover:text-gray-300'
-                }`}
-              >
-                📷 Photography Legends
-                {activeTab === 'masters' && (
-                  <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-indigo-500 to-purple-500" />
-                )}
-              </button>
-            </div>
+  {/* DESKTOP VERSION - Tabs + Grid (>= md breakpoint = 768px) */}
+  <div className="hidden md:block">
+    {/* Tab Navigation */}
+    <div className="flex space-x-2 mb-6 border-b border-gray-800">
+      <button
+        onClick={() => {
+          setActiveTab('wedding');
+          setSelectedMentor(null);
+        }}
+        className={`pb-3 px-4 font-semibold text-sm transition-all relative ${
+          activeTab === 'wedding'
+            ? 'text-white'
+            : 'text-gray-500 hover:text-gray-300'
+        }`}
+      >
+        🤵👰 Wedding Masters
+        {activeTab === 'wedding' && (
+          <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-rose-500 to-pink-500" />
+        )}
+      </button>
+      
+      <button
+        onClick={() => {
+          setActiveTab('masters');
+          setSelectedMentor(null);
+        }}
+        className={`pb-3 px-4 font-semibold text-sm transition-all relative ${
+          activeTab === 'masters'
+            ? 'text-white'
+            : 'text-gray-500 hover:text-gray-300'
+        }`}
+      >
+        📷 Photography Legends
+        {activeTab === 'masters' && (
+          <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-indigo-500 to-purple-500" />
+        )}
+      </button>
+    </div>
 
-            {/* Mentor Cards Grid */}
-            <div className="grid grid-cols-5 gap-3 mb-4">
-              {MENTORS[activeTab].map((mentor) => {
-                const isSelected = selectedMentor === mentor.id;
-                return (
-                  <button
-                    key={mentor.id}
-                    onClick={() => setSelectedMentor(isSelected ? null : mentor.id)}
-                    className={`relative p-4 rounded-xl border-2 transition-all hover:scale-105 ${
-                      isSelected
-                        ? activeTab === 'wedding'
-                          ? 'border-rose-500 bg-rose-500/10 shadow-lg shadow-rose-500/20'
-                          : 'border-indigo-500 bg-indigo-500/10 shadow-lg shadow-indigo-500/20'
-                        : 'border-gray-800 bg-gray-900 hover:border-gray-700'
-                    }`}
-                  >
-                    {isSelected && (
-                      <div className={`absolute -top-2 -right-2 w-6 h-6 rounded-full flex items-center justify-center ${
-                        activeTab === 'wedding' ? 'bg-rose-500' : 'bg-indigo-500'
-                      }`}>
-                        <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                        </svg>
-                      </div>
-                    )}
-                    
-                    <div className="text-4xl mb-2">{mentor.avatar}</div>
-                    <div className="text-sm font-bold text-white mb-1 line-clamp-1">
-                      {mentor.name}
-                    </div>
-                    <div className="text-xs text-gray-500 mb-2">
-                      {mentor.difficulty}
-                    </div>
-                    <div className={`text-xs px-2 py-1 rounded ${
-                      isSelected
-                        ? activeTab === 'wedding'
-                          ? 'bg-rose-500/20 text-rose-300'
-                          : 'bg-indigo-500/20 text-indigo-300'
-                        : 'bg-gray-800 text-gray-400'
-                    }`}>
-                      {mentor.specialty}
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-
-            {/* "Nessun Mentore" button */}
-            <button
-              onClick={() => setSelectedMentor(null)}
-              className={`w-full py-3 px-4 rounded-lg border-2 transition-all text-sm font-medium ${
-                !selectedMentor
-                  ? 'border-gray-600 bg-gray-700 text-white'
-                  : 'border-gray-800 bg-gray-900 text-gray-400 hover:border-gray-700'
-              }`}
-            >
-              🤖 Nessun Mentore (AI Generico)
-            </button>
-          </div>
-
-          {/* Mentor Preview Card (sia mobile che desktop) */}
-          {selectedMentor && getCurrentMentor() && (
-            <div className={`mt-6 bg-gradient-to-br rounded-xl border-2 p-6 shadow-2xl transition-all ${
-              activeTab === 'wedding'
-                ? 'from-gray-900 to-rose-950/30 border-rose-500/30'
-                : 'from-gray-900 to-indigo-950/30 border-indigo-500/30'
-            }`}>
-              <div className="flex items-start space-x-4">
-                <div className="flex-shrink-0">
-                  <div className={`w-16 md:w-20 h-16 md:h-20 rounded-2xl flex items-center justify-center text-4xl md:text-5xl shadow-lg ${
-                    activeTab === 'wedding'
-                      ? 'bg-gradient-to-br from-rose-500 to-pink-600'
-                      : 'bg-gradient-to-br from-indigo-500 to-purple-600'
-                  }`}>
-                    {getCurrentMentor()!.avatar}
-                  </div>
-                </div>
-                
-                <div className="flex-1">
-                  <div className="flex items-start justify-between mb-2">
-                    <div>
-                      <h3 className="text-xl md:text-2xl font-bold text-white mb-1">
-                        {getCurrentMentor()!.name}
-                      </h3>
-                      <p className={`text-sm font-semibold ${
-                        activeTab === 'wedding' ? 'text-rose-400' : 'text-indigo-400'
-                      }`}>
-                        {getCurrentMentor()!.tagline}
-                      </p>
-                    </div>
-                    <span className="text-xs text-gray-500 bg-gray-800 px-2 py-1 rounded hidden md:inline">
-                      {getCurrentMentor()!.difficulty}
-                    </span>
-                  </div>
-                  
-                  <p className="text-sm text-gray-300 mb-4 leading-relaxed">
-                    {getCurrentMentor()!.description}
-                  </p>
-                  
-                  <div className="flex flex-wrap gap-2 mb-4">
-                    {getCurrentMentor()!.bestFor.split(', ').map((tag, i) => (
-                      <span
-                        key={i}
-                        className={`text-xs px-3 py-1 rounded-full font-medium ${
-                          activeTab === 'wedding'
-                            ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
-                            : 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30'
-                        }`}
-                      >
-                        {tag}
-                      </span>
-                    ))}
-                  </div>
-                  
-                  <div className="flex items-center space-x-2 text-xs">
-                    <span className="px-3 py-1.5 bg-gray-800 rounded-lg text-gray-400 border border-gray-700">
-                      <span className="text-gray-500">Stile:</span>{' '}
-                      <span className="text-white font-medium">{getCurrentMentor()!.style}</span>
-                    </span>
-                  </div>
-                </div>
-              </div>
-              
-              <div className={`mt-5 pt-5 border-t flex items-start space-x-3 ${
-                activeTab === 'wedding' ? 'border-rose-500/20' : 'border-indigo-500/20'
+    {/* Mentor Cards Grid */}
+    <div className="grid grid-cols-5 gap-3 mb-4">
+      {MENTORS[activeTab].map((mentor) => {
+        const isSelected = selectedMentor === mentor.id;
+        return (
+          <button
+            key={mentor.id}
+            onClick={() => setSelectedMentor(isSelected ? null : mentor.id)}
+            className={`relative p-4 rounded-xl border-2 transition-all hover:scale-105 ${
+              isSelected
+                ? activeTab === 'wedding'
+                  ? 'border-rose-500 bg-rose-500/10 shadow-lg shadow-rose-500/20'
+                  : 'border-indigo-500 bg-indigo-500/10 shadow-lg shadow-indigo-500/20'
+                : 'border-gray-800 bg-gray-900 hover:border-gray-700'
+            }`}
+          >
+            {isSelected && (
+              <div className={`absolute -top-2 -right-2 w-6 h-6 rounded-full flex items-center justify-center ${
+                activeTab === 'wedding' ? 'bg-rose-500' : 'bg-indigo-500'
               }`}>
-                <AlertCircle className={`w-5 h-5 flex-shrink-0 ${
-                  activeTab === 'wedding' ? 'text-rose-400' : 'text-indigo-400'
-                }`} />
-                <div>
-                  <p className="text-sm text-gray-300 mb-1">
-                    <span className="font-semibold text-white">
-                      {getCurrentMentor()!.name}
-                    </span>{' '}
-                    sarà{' '}
-                    <span className={`font-bold ${
-                      getCurrentMentor()!.difficulty === '⭐⭐⭐⭐⭐'
-                        ? 'text-red-400'
-                        : 'text-yellow-400'
-                    }`}>
-                      {getCurrentMentor()!.difficulty === '⭐⭐⭐⭐⭐'
-                        ? 'estremamente severo'
-                        : 'molto esigente'}
-                    </span>{' '}
-                    nella critica
-                  </p>
-                  <p className="text-xs text-gray-500">
-                    Preparati a ricevere feedback diretto e senza compromessi
-                  </p>
-                </div>
+                <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
               </div>
+            )}
+            
+            <div className="text-4xl mb-2">{mentor.avatar}</div>
+            <div className="text-sm font-bold text-white mb-1 line-clamp-1">
+              {mentor.name}
             </div>
-          )}
+            <div className="text-xs text-gray-500 mb-2">
+              {mentor.difficulty}
+            </div>
+            <div className={`text-xs px-2 py-1 rounded ${
+              isSelected
+                ? activeTab === 'wedding'
+                  ? 'bg-rose-500/20 text-rose-300'
+                  : 'bg-indigo-500/20 text-indigo-300'
+                : 'bg-gray-800 text-gray-400'
+            }`}>
+              {mentor.specialty}
+            </div>
+          </button>
+        );
+      })}
+    </div>
+
+    {/* "Nessun Mentore" button */}
+    <button
+      onClick={() => setSelectedMentor(null)}
+      className={`w-full py-3 px-4 rounded-lg border-2 transition-all text-sm font-medium ${
+        !selectedMentor
+          ? 'border-gray-600 bg-gray-700 text-white'
+          : 'border-gray-800 bg-gray-900 text-gray-400 hover:border-gray-700'
+      }`}
+    >
+      🤖 Nessun Mentore (AI Generico)
+    </button>
+  </div>
+
+  {/* Mentor Preview Card (RESPONSIVE - sia mobile che desktop) */}
+  {selectedMentor && getCurrentMentor() && (
+    <div className={`mt-6 bg-gradient-to-br rounded-xl border-2 p-4 md:p-6 shadow-2xl transition-all ${
+      activeTab === 'wedding'
+        ? 'from-gray-900 to-rose-950/30 border-rose-500/30'
+        : 'from-gray-900 to-indigo-950/30 border-indigo-500/30'
+    }`}>
+      <div className="flex flex-col sm:flex-row items-start space-y-4 sm:space-y-0 sm:space-x-4">
+        {/* Avatar */}
+        <div className="flex-shrink-0 mx-auto sm:mx-0">
+          <div className={`w-16 h-16 md:w-20 md:h-20 rounded-2xl flex items-center justify-center text-4xl md:text-5xl shadow-lg ${
+            activeTab === 'wedding'
+              ? 'bg-gradient-to-br from-rose-500 to-pink-600'
+              : 'bg-gradient-to-br from-indigo-500 to-purple-600'
+          }`}>
+            {getCurrentMentor()!.avatar}
+          </div>
         </div>
-        {/* ===== FINE MENTOR SELECTION ===== */}
+        
+        {/* Info */}
+        <div className="flex-1 text-center sm:text-left">
+          <div className="flex flex-col sm:flex-row items-center sm:items-start justify-between mb-2">
+            <div>
+              <h3 className="text-xl md:text-2xl font-bold text-white mb-1">
+                {getCurrentMentor()!.name}
+              </h3>
+              <p className={`text-sm font-semibold ${
+                activeTab === 'wedding' ? 'text-rose-400' : 'text-indigo-400'
+              }`}>
+                {getCurrentMentor()!.tagline}
+              </p>
+            </div>
+            <span className="text-xs text-gray-500 bg-gray-800 px-2 py-1 rounded mt-2 sm:mt-0">
+              {getCurrentMentor()!.difficulty}
+            </span>
+          </div>
+          
+          <p className="text-sm text-gray-300 mb-4 leading-relaxed">
+            {getCurrentMentor()!.description}
+          </p>
+          
+          {/* Tags */}
+          <div className="flex flex-wrap gap-2 mb-4 justify-center sm:justify-start">
+            {getCurrentMentor()!.bestFor.split(', ').map((tag, i) => (
+              <span
+                key={i}
+                className={`text-xs px-3 py-1 rounded-full font-medium ${
+                  activeTab === 'wedding'
+                    ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
+                    : 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30'
+                }`}
+              >
+                {tag}
+              </span>
+            ))}
+          </div>
+          
+          {/* Style Info */}
+          <div className="flex items-center justify-center sm:justify-start space-x-2 text-xs">
+            <span className="px-3 py-1.5 bg-gray-800 rounded-lg text-gray-400 border border-gray-700">
+              <span className="text-gray-500">Stile:</span>{' '}
+              <span className="text-white font-medium">{getCurrentMentor()!.style}</span>
+            </span>
+          </div>
+        </div>
+      </div>
+      
+      {/* Warning Badge */}
+      <div className={`mt-5 pt-5 border-t flex flex-col sm:flex-row items-start space-y-2 sm:space-y-0 sm:space-x-3 ${
+        activeTab === 'wedding' ? 'border-rose-500/20' : 'border-indigo-500/20'
+      }`}>
+        <AlertCircle className={`w-5 h-5 flex-shrink-0 mx-auto sm:mx-0 ${
+          activeTab === 'wedding' ? 'text-rose-400' : 'text-indigo-400'
+        }`} />
+        <div className="text-center sm:text-left">
+          <p className="text-sm text-gray-300 mb-1">
+            <span className="font-semibold text-white">
+              {getCurrentMentor()!.name}
+            </span>{' '}
+            sarà{' '}
+            <span className={`font-bold ${
+              getCurrentMentor()!.difficulty === '⭐⭐⭐⭐⭐'
+                ? 'text-red-400'
+                : 'text-yellow-400'
+            }`}>
+              {getCurrentMentor()!.difficulty === '⭐⭐⭐⭐⭐'
+                ? 'estremamente severo'
+                : 'molto esigente'}
+            </span>{' '}
+            nella critica
+          </p>
+          <p className="text-xs text-gray-500">
+            Preparati a ricevere feedback diretto e senza compromessi
+          </p>
+        </div>
+      </div>
+    </div>
+  )}
+</div>
+{/* ===== FINE MENTOR SELECTION ===== */}
+```
+
+---
+
+## 📸 RIFERIMENTO VISUALE
+
+Dovrebbe trovarsi **tra**:
+- ⬆️ La sezione "Tono di Analisi" (Technical/Emotional)
+- ⬇️ La sezione "Curator Selection Count" (o l'upload se sei in modalità Single)
+
+Quindi la struttura è:
+```
+[Mode Selection]
+[Style Toggle - Technical/Emotional]
+👉 [MENTOR SELECTION] 👈 INCOLLA QUI
+[Curator Count (se curator mode)]
+[Upload + Analyze]
 
         {/* Curator Selection Count */}
         {mode === 'curator' && (
