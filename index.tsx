@@ -978,9 +978,8 @@ const App = () => {
     <select
       value={activeTab}
       onChange={(e) => {
-        const newTab = e.target.value as 'wedding' | 'masters';
-        setActiveTab(newTab);
-        setSelectedMentor(null); // Reset mentor quando cambi categoria
+        setActiveTab(e.target.value as 'wedding' | 'masters');
+        setSelectedMentor(null);
       }}
       className="w-full bg-gray-900 border-2 border-gray-800 rounded-lg px-4 py-3 text-white text-base focus:outline-none focus:border-indigo-500 transition-colors"
     >
@@ -992,7 +991,7 @@ const App = () => {
   {/* Mentor Selector */}
   <div>
     <label className="block text-xs text-gray-500 mb-2 font-medium">
-      Mentore {activeTab === 'wedding' ? '(Wedding)' : '(Legends)'}
+      Mentore ({activeTab === 'wedding' ? 'Wedding' : 'Legends'})
     </label>
     <select
       value={selectedMentor || ''}
@@ -1000,17 +999,34 @@ const App = () => {
       className="w-full bg-gray-900 border-2 border-gray-800 rounded-lg px-4 py-3 text-white text-base focus:outline-none focus:border-indigo-500 transition-colors"
     >
       <option value="">🤖 Nessun Mentore (AI Generico)</option>
-      {MENTORS[activeTab].map((mentor) => (
-        <option key={mentor.id} value={mentor.id}>
-          {mentor.avatar} {mentor.name} - {mentor.specialty}
-        </option>
-      ))}
+      
+      {/* Wedding Masters */}
+      {activeTab === 'wedding' && (
+        <>
+          <option value="jose-villa">🎞️ Jose Villa - Fine Art Film</option>
+          <option value="elizabeth-messina">✨ Elizabeth Messina - Luminous Portraits</option>
+          <option value="corbin-gurkin">💎 Corbin Gurkin - Celebrity Glamour</option>
+          <option value="john-dolan">🎬 John Dolan - Timeless Film</option>
+          <option value="kt-merry">🌸 KT Merry - Soft Editorial</option>
+        </>
+      )}
+      
+      {/* Photography Legends */}
+      {activeTab === 'masters' && (
+        <>
+          <option value="ansel-adams">⛰️ Ansel Adams - Landscape & Tecnica</option>
+          <option value="cartier-bresson">📸 Henri Cartier-Bresson - Street</option>
+          <option value="annie-leibovitz">👁️ Annie Leibovitz - Ritratti</option>
+          <option value="steve-mccurry">🌍 Steve McCurry - Travel</option>
+          <option value="helmut-newton">🖤 Helmut Newton - Fashion</option>
+        </>
+      )}
     </select>
   </div>
   
-  {/* DEBUG INFO (rimuovi dopo il test) */}
+  {/* Debug - RIMUOVI DOPO IL TEST */}
   <div className="text-xs text-gray-500 bg-gray-800 p-2 rounded">
-    Debug: activeTab = {activeTab}, mentori disponibili = {MENTORS[activeTab].length}
+    Debug: activeTab = {activeTab}, selected = {selectedMentor || 'none'}
   </div>
 </div>
 
