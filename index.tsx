@@ -592,14 +592,57 @@ ${personaInstructions}
     // Usa direttamente le API REST (come nella versione old)
 // Nota: Google può rispondere con 503/429 ("model overloaded" / rate limit). In quel caso facciamo retry
 // senza cambiare la logica dell'app: stesso payload, stessa chiave, stessi prompt.
-const modelsToTry = ['gemini-2.5-flash', 'gemini-1.5-flash'] as const;
+// IMPORTANTE: non tutti i model id storici (es. gemini-1.5-*) sono disponibili su API v1.
+// Quindi, per il fallback, leggiamo i modelli disponibili via endpoint /v1/models e scegliamo il primo valido.
+
 const maxAttemptsPerModel = 3;
 const baseDelayMs = 800;
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
+const getModelsToTry = async (apiKey: string): Promise<string[]> => {
+  // Prima scelta: manteniamo il comportamento "old" (se era questo il model che usavi).
+  const preferred = [
+    'gemini-2.5-flash',
+    // fallback moderni (se disponibili sul tuo account/area)
+    'gemini-2.0-flash',
+    'gemini-2.0-flash-lite',
+    'gemini-2.5-pro',
+  ];
+
+  try {
+    const res = await fetch(
+      `https://generativelanguage.googleapis.com/v1/models?key=${apiKey}`
+    );
+    if (!res.ok) return preferred;
+
+    const json = await res.json();
+    const models: Array<any> = json?.models || [];
+
+    const supported = new Set(
+      models
+        .filter((m) => (m?.supportedGenerationMethods || []).includes('generateContent'))
+        .map((m) => String(m?.name || ''))
+        .filter(Boolean)
+        .map((name) => name.replace(/^models\//, ''))
+    );
+
+    const filteredPreferred = preferred.filter((id) => supported.has(id));
+    if (filteredPreferred.length) return filteredPreferred;
+
+    // Se nessuno dei preferiti è presente, usa il primo modello che supporta generateContent.
+    const first = Array.from(supported)[0];
+    return first ? [first] : preferred;
+  } catch {
+    // Se fallisce la listModels (rete/CORS), usiamo i preferiti.
+    return preferred;
+  }
+};
+
 let lastErr: any = null;
 let data: any = null;
+
+const modelsToTry = await getModelsToTry(apiKey);
 
 for (const model of modelsToTry) {
   for (let attempt = 1; attempt <= maxAttemptsPerModel; attempt++) {
